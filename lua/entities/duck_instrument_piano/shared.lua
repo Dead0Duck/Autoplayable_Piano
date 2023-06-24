@@ -1,8 +1,8 @@
 ENT.Base			= 'duck_instrument_base'
 ENT.Type			= 'anim'
-ENT.PrintName		= 'Пианино'
+ENT.PrintName		= '#duckInstrument.Piano'
 ENT.Author			= 'DeadDuck'
-ENT.Category		= 'Инструменты'
+ENT.Category		= '#duckInstrument.Category'
 ENT.Spawnable		= true
 ENT.AdminSpawnable 	= true
 

@@ -2,9 +2,9 @@ AddCSLuaFile()
 
 ENT.Base			= 'duck_instrument_piano'
 ENT.Type			= 'anim'
-ENT.PrintName		= 'Grand Пианино'
+ENT.PrintName		= '#duckInstrument.GrandPiano'
 ENT.Author			= 'DeadDuck'
-ENT.Category		= 'Инструменты'
+ENT.Category		= '#duckInstrument.Category'
 ENT.Spawnable		= true
 ENT.AdminSpawnable 	= true
 
