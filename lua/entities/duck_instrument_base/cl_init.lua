@@ -365,7 +365,7 @@ function ENT:DrawHUD()
 		draw.DrawText( Format( language.GetPhrase('duckInstrument.AutoPlaying'), self.MidiName or '???'), 'DuckInstrumentKeyLabel',
 			mainX + ( mainWidth / 2 ), mainY + 60,
 			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-	else
+	elseif self:CanUseAutoPlay() then
 		draw.DrawText( '#duckInstrument.Alt', 'DuckInstrumentKeyLabel',
 			mainX + ( mainWidth / 2 ), mainY + mainHeight + 30,
 			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
@@ -658,6 +658,7 @@ end )
 
 function ENT:MidiInterface()
 	if IsValid(self.MidiPanel) or self.MidiCurrent then return end
+	if not self:CanUseAutoPlay() then return end
 
 	local frame = vgui.Create('DFrame')
 	frame:SetSize(450,300)

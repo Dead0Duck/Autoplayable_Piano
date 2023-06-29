@@ -205,24 +205,22 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if not IsValid( ent:GetInstOwner() ) then return end
 
 		-- Check if the player is actually the owner of the instrument
-		if client == ent:GetInstOwner() then
+		if client ~= ent:GetInstOwner() then return end
 
-			-- Gather note
-			local key = net.ReadString()
+		-- Gather note
+		local key = net.ReadString()
 
-			-- Send it!!
-			ent:NetworkKey( key )
+		-- Send it!!
+		ent:NetworkKey( key )
 
-			-- Effects
-			ent:NoteEffect( key )
+		-- Effects
+		ent:NoteEffect( key )
 
-			-- Gather notes
-			--[[ local keys = net.ReadTable()
-		
-			-- Send them!!
-			ent:NetworkKeys( keys ) ]]
-
-		end
+		-- Gather notes
+		--[[ local keys = net.ReadTable()
+	
+		-- Send them!!
+		ent:NetworkKeys( keys ) ]]
 
 	elseif enum == INSTNET_MIDISTART then
 
@@ -233,19 +231,20 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if not IsValid( ent:GetInstOwner() ) then return end
 
 		-- Check if the player is actually the owner of the instrument
-		if client == ent:GetInstOwner() then
+		if client ~= ent:GetInstOwner() then return end
 
-			ent.MidiCurrent = net.ReadUInt(7)
-			ent.MidiStartTime = CurTime()
+		-- Check if the player can auto-play
+		if not ent:CanUseAutoPlay(client) then return end
 
-			net.Start('DuckInstrumentNetwork')
-				net.WriteEntity( ent )
-				net.WriteUInt( INSTNET_MIDISTART, 3 )
-				net.WriteUInt( ent.MidiCurrent, 7 )
-				net.WriteDouble( ent.MidiStartTime )
-			net.Broadcast()
+		ent.MidiCurrent = net.ReadUInt(7)
+		ent.MidiStartTime = CurTime()
 
-		end
+		net.Start('DuckInstrumentNetwork')
+			net.WriteEntity( ent )
+			net.WriteUInt( INSTNET_MIDISTART, 3 )
+			net.WriteUInt( ent.MidiCurrent, 7 )
+			net.WriteDouble( ent.MidiStartTime )
+		net.Broadcast()
 
 	elseif enum == INSTNET_MIDISPAWN then
 
@@ -281,9 +280,9 @@ concommand.Add( 'duck_instrument_leave', function( ply, cmd, args )
 	if not IsValid( ent:GetInstOwner() ) then return end
 
 	-- Leave instrument
-	if ply == ent:GetInstOwner() then
-		ent:RemoveOwner()
-	end
+	if ply ~= ent:GetInstOwner() then return end
+
+	ent:RemoveOwner()
 
 end )
 
@@ -302,14 +301,14 @@ concommand.Add( 'duck_instrument_auto_stop', function( ply, cmd, args )
 	if not IsValid( ent:GetInstOwner() ) then return end
 
 	-- Leave instrument
-	if ply == ent:GetInstOwner() then
-		ent.MidiCurrent = nil
-		ent.MidiStartTime = nil
+	if ply ~= ent:GetInstOwner() then return end
 
-		net.Start( 'DuckInstrumentNetwork' )
-			net.WriteEntity( ent )
-			net.WriteUInt( INSTNET_MIDISTOP, 3 )
-		net.Broadcast()
-	end
+	ent.MidiCurrent = nil
+	ent.MidiStartTime = nil
+
+	net.Start( 'DuckInstrumentNetwork' )
+		net.WriteEntity( ent )
+		net.WriteUInt( INSTNET_MIDISTOP, 3 )
+	net.Broadcast()
 
 end )

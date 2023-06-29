@@ -97,6 +97,12 @@ function ENT:SetupDataTables()
 
 end
 
+function ENT:CanUseAutoPlay(ply)
+	ply = ply or self:GetInstOwner()
+
+	return true
+end
+
 if SERVER then
 	function ENT:Intiailize()
 		self:PrecacheSounds()
