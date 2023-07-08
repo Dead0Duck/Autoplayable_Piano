@@ -326,7 +326,7 @@ local function leaveInst(ply)
 end
 hook.Add( 'PlayerDisconnected', 'DuckInstrument', leaveInst )
 
-hook.Add( 'PlayerLeaveVehicle', 'PlayerLeaveVehicleTurnOn', function( ply, veh )
+hook.Add( 'PlayerLeaveVehicle', 'DuckInstrument', function( ply, veh )
 	if not veh.DuckInstrumentChair then return end
 
 	leaveInst(ply)
