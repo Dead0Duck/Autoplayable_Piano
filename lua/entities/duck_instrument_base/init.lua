@@ -67,6 +67,7 @@ function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 
 	self.Chair.HandleAnimation = HandleRollercoasterAnimation
 	self.Chair:SetOwner( self )
+	self.Chair.DuckInstrumentChair = true
 
 	self.Chair:Spawn()
 	self.Chair:Activate()
@@ -123,8 +124,9 @@ function ENT:AddOwner( ply )
 		net.WriteUInt( INSTNET_USE, 3 )
 	net.Send( ply )
 
-	ply.EntryPoint = ply:GetPos()
+	ply.EntryPoint = ply:GetPos() - self:GetPos()
 	ply.EntryAngles = ply:EyeAngles()
+	ply.DuckInstrument = self
 
 	self:SetInstOwner(ply)
 
@@ -138,17 +140,20 @@ function ENT:RemoveOwner()
 
 	if not IsValid( self:GetInstOwner() ) then return end
 
+	local ply = self:GetInstOwner()
+
+	self:SetInstOwner(NULL)
+
 	net.Start( 'DuckInstrumentNetwork' )
 		net.WriteEntity( nil )
 		net.WriteUInt( INSTNET_USE, 3 )
-	net.Send( self:GetInstOwner() )
+	net.Send( ply )
 
-	self:GetInstOwner():ExitVehicle( self.Chair )
+	ply:ExitVehicle( self.Chair )
 
-	self:GetInstOwner():SetPos( self:GetInstOwner().EntryPoint )
-	self:GetInstOwner():SetEyeAngles( self:GetInstOwner().EntryAngles )
-
-	self:SetInstOwner(NULL)
+	ply:SetPos( ply.EntryPoint + self:GetPos() )
+	ply:SetEyeAngles( ply.EntryAngles )
+	ply.DuckInstrument = nil
 
 	self.MidiCurrent = nil
 	self.MidiStartTime = nil
@@ -311,4 +316,18 @@ concommand.Add( 'duck_instrument_auto_stop', function( ply, cmd, args )
 		net.WriteUInt( INSTNET_MIDISTOP, 3 )
 	net.Broadcast()
 
+end )
+
+local function leaveInst(ply)
+	local inst = ply.DuckInstrument
+	if not IsValid(inst) then return end
+
+	inst:RemoveOwner()
+end
+hook.Add( 'PlayerDisconnected', 'DuckInstrument', leaveInst )
+
+hook.Add( 'PlayerLeaveVehicle', 'PlayerLeaveVehicleTurnOn', function( ply, veh )
+	if not veh.DuckInstrumentChair then return end
+
+	leaveInst(ply)
 end )
