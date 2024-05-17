@@ -97,8 +97,12 @@ function ENT:SetupDataTables()
 
 end
 
-function ENT:CanUseAutoPlay(ply)
-	ply = ply or self:GetInstOwner()
+function ENT:CanUseAutoPlay()
+	local owner = self:GetInstOwner()
+
+	if hook.Run("duckPiano.CanAutoPlay", self, owner) == false then
+		return false
+	end
 
 	return true
 end
