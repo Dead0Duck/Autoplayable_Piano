@@ -7,6 +7,7 @@ language.Add('duckInstrument.Tab1', 'Tab - Прекратить Авто-игр�
 language.Add('duckInstrument.Tab2', 'Tab - Выйти из инструмента | Ctrl - Говорить')
 language.Add('duckInstrument.Songs', 'Песни')
 language.Add('duckInstrument.SongList', 'Список песен') ]]
+list.Set('ContentCategoryIcons', '#duckInstrument.Category', 'icon16/music.png')
 
 -- Таблица нот и соответствующих звуков
 local notes = {

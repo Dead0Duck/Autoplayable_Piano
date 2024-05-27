@@ -1,6 +1,7 @@
 ENT.Base			= 'base_anim'
 ENT.Type			= 'anim'
 ENT.PrintName		= 'Instrument Base'
+ENT.Category		= '#duckInstrument.Category'
 ENT.DuckInstrument	= true
 
 ENT.Model		= Model( 'models/fishy/furniture/piano.mdl' )
