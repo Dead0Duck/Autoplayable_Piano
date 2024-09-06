@@ -86,6 +86,7 @@ function ENT:MidiNotePlay(note)
 		local sound = self:GetSound(noteName)
 		self:EmitSound(sound, 80)
 
+		if not key then return true end
 		self:NoteEffect(noteName)
 		return true
 	end

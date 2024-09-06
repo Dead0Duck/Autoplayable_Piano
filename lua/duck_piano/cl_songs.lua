@@ -9,7 +9,7 @@ local function AddSong(n, v)
 end
 
 -- Разрешить добавление песен только из songs/*
-local songFiles, songFolders = file.Find( 'duck_piano/songs/*', 'LUA' )
+local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
 duckInstruments.AddSong = AddSong
 
 for _,folder in pairs(songFolders) do
