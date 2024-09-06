@@ -8,7 +8,7 @@ ENT.Model		= Model( 'models/fishy/furniture/piano.mdl' )
 ENT.ChairModel	= Model( 'models/fishy/furniture/piano_seat.mdl' )
 ENT.MaxKeys		= 4 -- how many keys can be played at once
 
-ENT.SoundDir	= 'GModTower/lobby/instruments/piano/'
+ENT.SoundDir	= 'GModTower/lobby/instruments/duckPiano/'
 ENT.SoundExt 	= '.wav'
 
 ENT.MidiCurrent = nil
@@ -80,9 +80,27 @@ function math.Fit( val, valMin, valMax, outMin, outMax )
 	return ( val - valMin ) * ( outMax - outMin ) / ( valMax - valMin ) + outMin
 end
 
+local keys = {
+	C = 0,
+	D = 2,
+	E = 4,
+	F = 6,
+	G = 8,
+	A = 10,
+	B = 12,
+}
 function ENT:NoteEffect( key )
-	local pos = string.sub( key, 2, 3 )
-	pos = math.Fit( tonumber( pos ), 1, 36, -3.8, 4 ) * 10
+	local pos = keys[string.sub(key, 1, 1)]
+	if string.match(key, '#') then
+		pos = pos + 1
+
+		local offset = tonumber( string.sub(key, 3, 4) )
+		pos = pos + 12 * offset
+	else
+		local offset = tonumber( string.sub(key, 2, 3) )
+		pos = pos + 12 * offset
+	end
+	pos = math.Fit(pos, 24, 84, -3.8, 4) * 10
 
 	local angle = self:GetAngles()
 	local offset = angle:Up() * 25 + angle:Forward() * 60 + angle:Right() * -(pos + 12)

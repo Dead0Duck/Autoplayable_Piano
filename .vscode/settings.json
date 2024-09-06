@@ -1,0 +1,19 @@
+{
+	"Lua.workspace.library": [
+		"SNIP",
+		"C:/Users/karta/AppData/Roaming/Code/User/globalStorage/sumneko.lua/addonManager/addons/garrysmod/module/library"
+	],
+	"Lua.runtime.special": {
+		"include": "dofile",
+		"IncludeCS": "dofile"
+	},
+	"Lua.runtime.nonstandardSymbol": [
+		"continue",
+		"&&",
+		"||",
+		"!=",
+		"!",
+		"//",
+		"/**/"
+	]
+}

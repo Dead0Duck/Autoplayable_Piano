@@ -1,23 +1,5 @@
 include('shared.lua')
-
---[[ language.Add('duckInstrument.AutoPlaying', 'Авто-игра песни %q')
-language.Add('duckInstrument.Space', 'Пробел - Нотные листы')
-language.Add('duckInstrument.Alt', 'Alt - Авто-Игра')
-language.Add('duckInstrument.Tab1', 'Tab - Прекратить Авто-игру | Ctrl - Говорить')
-language.Add('duckInstrument.Tab2', 'Tab - Выйти из инструмента | Ctrl - Говорить')
-language.Add('duckInstrument.Songs', 'Песни')
-language.Add('duckInstrument.SongList', 'Список песен') ]]
 list.Set('ContentCategoryIcons', '#duckInstrument.Category', 'icon16/music.png')
-
--- Таблица нот и соответствующих звуков
-local notes = {
-	['C2'] = 'a1', ['C#2'] = 'b1', ['D2'] = 'a2', ['D#2'] = 'b2', ['E2'] = 'a3', ['F2'] = 'a4', ['F#2'] = 'b3', ['G2'] = 'a5', ['G#2'] = 'b4', ['A2'] = 'a6', ['A#2'] = 'b5', ['B2'] = 'a7',
-	['C3'] = 'a8', ['C#3'] = 'b6', ['D3'] = 'a9', ['D#3'] = 'b7', ['E3'] = 'a10', ['F3'] = 'a11', ['F#3'] = 'b8', ['G3'] = 'a12', ['G#3'] = 'b9', ['A3'] = 'a13', ['A#3'] = 'b10', ['B3'] = 'a14',
-	['C4'] = 'a15', ['C#4'] = 'b11', ['D4'] = 'a16', ['D#4'] = 'b12', ['E4'] = 'a17', ['F4'] = 'a18', ['F#4'] = 'b13', ['G4'] = 'a19', ['G#4'] = 'b14', ['A4'] = 'a20', ['A#4'] = 'b15', ['B4'] = 'a21',
-	['C5'] = 'a22', ['C#5'] = 'b16', ['D5'] = 'a23', ['D#5'] = 'b17', ['E5'] = 'a24', ['F5'] = 'a25', ['F#5'] = 'b18', ['G5'] = 'a26', ['G#5'] = 'b19', ['A5'] = 'a27', ['A#5'] = 'b20', ['B5'] = 'a28',
-	['C6'] = 'a29', ['C#6'] = 'b21', ['D6'] = 'a30', ['D#6'] = 'b22', ['E6'] = 'a31', ['F6'] = 'a32', ['F#6'] = 'b23', ['G6'] = 'a33', ['G#6'] = 'b24', ['A6'] = 'a34', ['A#6'] = 'b25', ['B6'] = 'a35',
-	['C7'] = 'a36', ['C#7'] = 'b26', ['D7'] = 'a37', ['D#7'] = 'b27', ['E7'] = 'a38', ['F7'] = 'a39', ['F#7'] = 'b28', ['G7'] = 'a40', ['G#7'] = 'b29', ['A7'] = 'a41', ['A#7'] = 'b30', ['B7'] = 'a42',
-}
 
 ENT.DEBUG = true
 
@@ -98,23 +80,19 @@ function ENT:MidiNotePlay(note)
 
 	if timePassed - noteTime > 0.2 then return true end
 
-	local key = self.NoteKeys[notes[noteName]]
-	if not key then return true end
-
-	local pos = string.sub( notes[noteName], 2, 3 )
-	pos = math.Fit( tonumber( pos ), 1, 36, -3.8, 4 )
+	local key = self.NoteKeys[noteName]
 
 	if not isMePlaying then
-		local sound = self:GetSound( notes[noteName] )
-		self:EmitSound( sound, 80 )
+		local sound = self:GetSound(noteName)
+		self:EmitSound(sound, 80)
 
-		self:NoteEffect( notes[noteName] )
-
+		self:NoteEffect(noteName)
 		return true
 	end
 
-	self:OnRegisteredKeyPlayed(notes[noteName], true)
+	self:OnRegisteredKeyPlayed(noteName, true)
 
+	if not key then return true end
 	if string.match(noteName, '#') then
 		self.ShiftMode = true
 	end
@@ -126,7 +104,7 @@ function ENT:MidiNotePlay(note)
 		self.ShiftMode = false
 	end)
 
-	self:NoteEffect( notes[noteName] )
+	self:NoteEffect(noteName)
 
 	return true
 end
@@ -630,9 +608,10 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	-- Start playing auto-piano
 	elseif enum == INSTNET_MIDISTART then
 
-		if not IsValid( ent ) then return end
+		if not IsValid(ent) then return end
 
-		if IsValid( LocalPlayer().duckInstrument ) and LocalPlayer().duckInstrument == ent then
+		local myInst = LocalPlayer().duckInstrument
+		if myInst == ent then
 			return
 		end
 
@@ -669,6 +648,13 @@ function ENT:MidiInterface()
 	frame:ShowCloseButton(true)
 	frame:MakePopup()
 	self.MidiPanel = frame
+
+	frame.ent = self
+	function frame:Think()
+		if not IsValid(self.ent) or LocalPlayer().duckInstrument ~= self.ent then
+			self:Remove()
+		end
+	end
 
 	local songList = vgui.Create('DListView', frame)
 	songList:SetMultiSelect(false)

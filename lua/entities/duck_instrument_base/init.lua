@@ -239,7 +239,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if client ~= ent:GetInstOwner() then return end
 
 		-- Check if the player can auto-play
-		if not ent:CanUseAutoPlay(client) then return end
+		if not ent:CanUseAutoPlay() then return end
 
 		ent.MidiCurrent = net.ReadUInt(7)
 		ent.MidiStartTime = CurTime()
