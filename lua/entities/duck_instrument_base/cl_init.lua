@@ -662,28 +662,41 @@ function ENT:MidiInterface()
 	songList:SetPos(5,30)
 	songList:SetSize(440, 260)
 	songList:AddColumn('#duckInstrument.Songs')
-	songList.OnRowSelected = function(lst, index, pnl)
-		if not IsValid( self ) then return end
-		if not IsValid( LocalPlayer().duckInstrument ) or LocalPlayer().duckInstrument ~= self then return end
+	songList.OnRowSelected = function(lst, _, pnl)
+		if not IsValid( self ) then
+			frame:Close()
+			return
+		end
+		if not IsValid( LocalPlayer().duckInstrument ) or LocalPlayer().duckInstrument ~= self then
+			frame:Close()
+			return
+		end
+
+		local songId = pnl.songId
+		if not self:CanUseAutoPlay(songId) then
+			frame:Close()
+			return
+		end
 
 		self:CloseSheetMusic()
 
-		self.MidiName = duckInstruments.songNames[index]
-		self.MidiCurrent = duckInstruments.songs[index]
+		self.MidiName = duckInstruments.songNames[songId]
+		self.MidiCurrent = duckInstruments.songs[songId]
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
 
 		net.Start('DuckInstrumentNetwork')
 			net.WriteEntity( self )
 			net.WriteUInt( INSTNET_MIDISTART, 3 )
-			net.WriteUInt( index, 7 )
+			net.WriteUInt( songId, 7 )
 		net.SendToServer()
 
 		frame:Close()
 	end
 
 	for i = 1, #duckInstruments.songNames do
-		songList:AddLine(duckInstruments.songNames[i])
+		if not self:CanUseAutoPlay(i) then continue end
+		songList:AddLine(duckInstruments.songNames[i]).songId = i
 	end
 	songList:SortByColumn( 1 )
 end

@@ -32,17 +32,23 @@ end
 function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 
 	-- Chair Model
-	self.ChairMDL = ents.Create( 'prop_physics_multiplayer' )
-	self.ChairMDL:SetModel( self.ChairModel )
-	self.ChairMDL:SetParent( self )
-	self.ChairMDL:SetPos( self:GetPos() + vecmdl )
-	self.ChairMDL:SetAngles( angmdl )
+	local isNewChair = false
+	if not IsValid(self.ChairMDL) or self.ChairMDL:GetOwner() ~= self then
+		isNewChair = true
+		self.ChairMDL = ents.Create( 'prop_physics_multiplayer' )
+		self.ChairMDL:SetModel( self.ChairModel )
+		self.ChairMDL:SetPos( vecmdl )
+		self.ChairMDL:SetAngles( angmdl )
+		self.ChairMDL:SetMoveParent( self )
+	end
 	self.ChairMDL:DrawShadow( false )
 
 	self.ChairMDL:SetCollisionGroup( COLLISION_GROUP_DEBRIS_TRIGGER )
 
-	self.ChairMDL:Spawn()
-	self.ChairMDL:Activate()
+	if isNewChair then
+		self.ChairMDL:Spawn()
+		self.ChairMDL:Activate()
+	end
 	self.ChairMDL:SetOwner( self )
 
 	local phys = self.ChairMDL:GetPhysicsObject()
@@ -54,12 +60,16 @@ function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 	self.ChairMDL:SetKeyValue( 'minhealthdmg', '999999' )
 
 	-- Chair Vehicle
-	self.Chair = ents.Create( 'prop_vehicle_prisoner_pod' )
-	self.Chair:SetModel( 'models/nova/airboat_seat.mdl' )
+	local isNewChair = false
+	if not IsValid(self.Chair) or self.Chair:GetOwner() ~= self then
+		isNewChair = true
+		self.Chair = ents.Create( 'prop_vehicle_prisoner_pod' )
+		self.Chair:SetModel( 'models/nova/airboat_seat.mdl' )
+		self.Chair:SetPos( vecvehicle )
+		self.Chair:SetAngles( angvehicle )
+		self.Chair:SetMoveParent( self.ChairMDL )
+	end
 	self.Chair:SetKeyValue( 'vehiclescript','scripts/vehicles/prisoner_pod.txt' )
-	self.Chair:SetPos( self.ChairMDL:GetPos() + vecvehicle )
-	self.Chair:SetParent( self.ChairMDL )
-	self.Chair:SetAngles( angvehicle )
 	self.Chair:SetNotSolid( true )
 	self.Chair:SetNoDraw( true )
 	self.Chair:DrawShadow( false )
@@ -69,8 +79,10 @@ function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 	self.Chair:SetOwner( self )
 	self.Chair.DuckInstrumentChair = true
 
-	self.Chair:Spawn()
-	self.Chair:Activate()
+	if isNewChair then
+		self.Chair:Spawn()
+		self.Chair:Activate()
+	end
 
 	phys = self.Chair:GetPhysicsObject()
 	if IsValid(phys) then
@@ -106,6 +118,21 @@ end
 -- Quick fix for overriding the instrument chair seating
 hook.Add( 'CanPlayerEnterVehicle', 'DuckInstrumentChairHook', HookChair )
 hook.Add( 'PlayerUse', 'DuckInstrumentChairModelHook', HookChair )
+
+function ENT:PostEntityPaste( ply, _, entsTable )
+	if table.Count(entsTable) <= 1 then return end
+
+	for _, ent in pairs(entsTable) do
+		if ent:GetClass() == "prop_physics" then
+			ent:Remove()
+		end
+
+		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
+			ent:Remove()
+		end
+	end
+	self:SetupChair()
+end
 
 function ENT:Use( ply )
 
@@ -239,9 +266,10 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if client ~= ent:GetInstOwner() then return end
 
 		-- Check if the player can auto-play
-		if not ent:CanUseAutoPlay() then return end
+		local songId = net.ReadUInt(7)
+		if not ent:CanUseAutoPlay(songId) then return end
 
-		ent.MidiCurrent = net.ReadUInt(7)
+		ent.MidiCurrent = songId
 		ent.MidiStartTime = CurTime()
 
 		net.Start('DuckInstrumentNetwork')
