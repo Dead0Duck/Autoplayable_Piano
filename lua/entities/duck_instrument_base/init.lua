@@ -269,7 +269,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		local songId = net.ReadUInt(7)
 		if not ent:CanUseAutoPlay(songId) then return end
 
-		ent.MidiCurrent = net.ReadUInt(7)
+		ent.MidiCurrent = songId
 		ent.MidiStartTime = CurTime()
 
 		net.Start('DuckInstrumentNetwork')
