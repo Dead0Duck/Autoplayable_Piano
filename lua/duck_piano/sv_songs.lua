@@ -1,13 +1,10 @@
 duckInstruments = {}
-duckInstruments.songs = {}
 duckInstruments.songNames = {}
 
-local function AddSong(n, v)
+local function AddSong(n)
 	if not isstring(n) then return end
-	if not istable(v) then return end
 
-	local i = #duckInstruments.songs + 1
-	duckInstruments.songs[i] = v
+	local i = #duckInstruments.songNames + 1
 	duckInstruments.songNames[i] = n
 
 	return i
@@ -24,11 +21,13 @@ duckInstruments.AddSong = AddSong
 for _,folder in pairs(songFolders) do
 	local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
 	for _,fileName in pairs(songFiles) do
+		AddCSLuaFile('duck_piano/songs/' .. folder .. '/' .. fileName)
 		include('duck_piano/songs/' .. folder .. '/' .. fileName)
 	end
 end
 
 for _,fileName in pairs(songFiles) do
+	AddCSLuaFile('duck_piano/songs/' .. fileName)
 	include('duck_piano/songs/' .. fileName)
 end
 
