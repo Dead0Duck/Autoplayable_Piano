@@ -364,7 +364,7 @@ function ENT:DrawHUD()
 			self.DefaultTextInfoColor, TEXT_ALIGN_LEFT )
 
 	local maxWidth = mainWidth - 150
-	local curWidth = (curTime / maxTime) * maxWidth
+	local curWidth = math.min((curTime / maxTime) * maxWidth, maxWidth)
 
 	surface.SetDrawColor(0,0,0,128)
 	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, maxWidth, 30)
