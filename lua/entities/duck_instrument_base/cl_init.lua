@@ -133,8 +133,7 @@ end
 function ENT:UpdMidi()
 	if not self.MidiCurrent then return end
 
-	for i = self.MidiCurrentNote, self.MidiCurrentNote + 10 do
-		if not self:MidiNotePlay(i) then break end
+	while self:MidiNotePlay(self.MidiCurrentNote) do
 	end
 end
 
