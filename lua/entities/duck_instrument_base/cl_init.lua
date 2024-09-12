@@ -84,10 +84,13 @@ function ENT:MidiNotePlay(note)
 
 	if not isMePlaying then
 		local sound = self:GetSound(noteName)
-		self:EmitSound(sound, 80)
+		if sound then
+			self:EmitSound(sound, 80)
+		end
 
-		if not key then return true end
-		self:NoteEffect(noteName)
+		if key then
+			self:NoteEffect(noteName)
+		end
 		return true
 	end
 
@@ -214,7 +217,9 @@ function ENT:OnRegisteredKeyPlayed( key, dontNetwork )
 
 	-- Play on the client first
 	local sound = self:GetSound( key )
-	self:EmitSound( sound, 100 )
+	if sound then
+		self:EmitSound( sound, 100 )
+	end
 
 	-- Network it
 	if dontNetwork then return end
