@@ -287,12 +287,15 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		-- This instrument doesn't have an owner...
 		if not IsValid( ent:GetInstOwner() ) then return end
 
+		-- We don't have any playing Midi
+		if not ent.MidiCurrent then return end
+
 		net.Start('DuckInstrumentNetwork')
 			net.WriteEntity( ent )
 			net.WriteUInt( INSTNET_MIDISTART, 3 )
 			net.WriteUInt( ent.MidiCurrent, 7 )
 			net.WriteDouble( ent.MidiStartTime )
-		net.Broadcast()
+		net.Send(client)
 
 	end
 
