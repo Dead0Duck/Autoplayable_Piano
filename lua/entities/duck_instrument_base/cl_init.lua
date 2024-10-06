@@ -84,10 +84,13 @@ function ENT:MidiNotePlay(note)
 
 	if not isMePlaying then
 		local sound = self:GetSound(noteName)
-		self:EmitSound(sound, 80)
+		if sound then
+			self:EmitSound(sound, 80)
+		end
 
-		if not key then return true end
-		self:NoteEffect(noteName)
+		if key then
+			self:NoteEffect(noteName)
+		end
 		return true
 	end
 
@@ -130,8 +133,7 @@ end
 function ENT:UpdMidi()
 	if not self.MidiCurrent then return end
 
-	for i = self.MidiCurrentNote, self.MidiCurrentNote + 10 do
-		if not self:MidiNotePlay(i) then break end
+	while self:MidiNotePlay(self.MidiCurrentNote) do
 	end
 end
 
@@ -214,7 +216,9 @@ function ENT:OnRegisteredKeyPlayed( key, dontNetwork )
 
 	-- Play on the client first
 	local sound = self:GetSound( key )
-	self:EmitSound( sound, 100 )
+	if sound then
+		self:EmitSound( sound, 100 )
+	end
 
 	-- Network it
 	if dontNetwork then return end
@@ -364,7 +368,7 @@ function ENT:DrawHUD()
 			self.DefaultTextInfoColor, TEXT_ALIGN_LEFT )
 
 	local maxWidth = mainWidth - 150
-	local curWidth = (curTime / maxTime) * maxWidth
+	local curWidth = math.min((curTime / maxTime) * maxWidth, maxWidth)
 
 	surface.SetDrawColor(0,0,0,128)
 	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, maxWidth, 30)
