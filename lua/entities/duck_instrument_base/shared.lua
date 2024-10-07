@@ -71,11 +71,12 @@ do
 	local files = file.Find("sound/" .. ENT.SoundDir .. "/*" .. ENT.SoundExt, "GAME")
 	for i = 1, #files do
 		local note = files[i]
-		validKeys[string.sub(note, 1, #note - #ENT.SoundExt)] = true
+		validKeys[string.sub(note, 1, #note - #ENT.SoundExt):lower()] = true
 	end
 end
 
 function ENT:GetSound( snd )
+	snd = snd:lower()
 	if not snd then return end
 	if snd == "" then return end
 	if not validKeys[snd] then return end
