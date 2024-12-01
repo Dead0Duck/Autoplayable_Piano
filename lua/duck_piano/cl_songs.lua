@@ -17,19 +17,31 @@ function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
--- Разрешить добавление песен только из songs/*
-local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
-duckInstruments.AddSong = AddSong
+local function ReloadSongs()
+	duckInstruments = {}
+	duckInstruments.songs = {}
+	duckInstruments.songNames = {}
 
-for _,folder in pairs(songFolders) do
-	local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
-	for _,fileName in pairs(songFiles) do
-		include('duck_piano/songs/' .. folder .. '/' .. fileName)
+	-- Разрешить добавление песен только из songs/*
+	local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
+	duckInstruments.AddSong = AddSong
+
+	for _,folder in pairs(songFolders) do
+		local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
+		for _,fileName in pairs(songFiles) do
+			include('duck_piano/songs/' .. folder .. '/' .. fileName)
+		end
 	end
-end
 
-for _,fileName in pairs(songFiles) do
-	include('duck_piano/songs/' .. fileName)
-end
+	for _,fileName in pairs(songFiles) do
+		include('duck_piano/songs/' .. fileName)
+	end
 
-duckInstruments.AddSong = nil
+	duckInstruments.AddSong = nil
+end
+ReloadSongs()
+
+net.Receive("duck_piano_reload", function()
+	ReloadSongs()
+	print("[Duck Instruments] Registered " .. #duckInstruments.songNames .. " songs.")
+end)
