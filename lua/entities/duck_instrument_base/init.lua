@@ -32,24 +32,18 @@ end
 function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 
 	-- Chair Model
-	local isNewChair = false
-	if not IsValid(self.ChairMDL) or self.ChairMDL:GetOwner() ~= self then
-		isNewChair = true
-		self.ChairMDL = ents.Create( 'prop_physics_multiplayer' )
-		self.ChairMDL:SetModel( self.ChairModel )
-		self.ChairMDL:SetPos( vecmdl )
-		self.ChairMDL:SetAngles( angmdl )
-		self.ChairMDL:SetMoveParent( self )
-	end
+	self.ChairMDL = ents.Create( 'prop_physics_multiplayer' )
+	self.ChairMDL:SetModel( self.ChairModel )
+	self.ChairMDL:SetPos( vecmdl )
+	self.ChairMDL:SetAngles( angmdl )
+	self.ChairMDL:SetMoveParent( self )
 	self.ChairMDL:DrawShadow( false )
 
-	self.ChairMDL:SetCollisionGroup( COLLISION_GROUP_DEBRIS_TRIGGER )
-
-	if isNewChair then
-		self.ChairMDL:Spawn()
-		self.ChairMDL:Activate()
-	end
+	self.ChairMDL:Spawn()
+	self.ChairMDL:Activate()
 	self.ChairMDL:SetOwner( self )
+
+	self.ChairMDL:SetCollisionGroup( COLLISION_GROUP_IN_VEHICLE )
 
 	local phys = self.ChairMDL:GetPhysicsObject()
 	if IsValid(phys) then
@@ -60,34 +54,39 @@ function ENT:SetupChair( vecmdl, angmdl, vecvehicle, angvehicle )
 	self.ChairMDL:SetKeyValue( 'minhealthdmg', '999999' )
 
 	-- Chair Vehicle
-	local isNewChair = false
-	if not IsValid(self.Chair) or self.Chair:GetOwner() ~= self then
-		isNewChair = true
-		self.Chair = ents.Create( 'prop_vehicle_prisoner_pod' )
-		self.Chair:SetModel( 'models/nova/airboat_seat.mdl' )
-		self.Chair:SetPos( vecvehicle )
-		self.Chair:SetAngles( angvehicle )
-		self.Chair:SetMoveParent( self.ChairMDL )
-	end
+	self.Chair = ents.Create( 'prop_vehicle_prisoner_pod' )
+	self.Chair:SetModel( 'models/nova/airboat_seat.mdl' )
+	self.Chair:SetPos( vecvehicle )
+	self.Chair:SetAngles( angvehicle )
+	self.Chair:SetMoveParent( self.ChairMDL )
 	self.Chair:SetKeyValue( 'vehiclescript','scripts/vehicles/prisoner_pod.txt' )
 	self.Chair:SetNotSolid( true )
 	self.Chair:SetNoDraw( true )
 	self.Chair:DrawShadow( false )
-	self.Chair:SetCollisionGroup( COLLISION_GROUP_DEBRIS_TRIGGER )
 
 	self.Chair.HandleAnimation = HandleRollercoasterAnimation
-	self.Chair:SetOwner( self )
 	self.Chair.DuckInstrumentChair = true
 
-	if isNewChair then
-		self.Chair:Spawn()
-		self.Chair:Activate()
-	end
+	self.Chair:Spawn()
+	self.Chair:Activate()
+	self.Chair:SetOwner( self )
+
+	self.Chair:SetCollisionGroup( COLLISION_GROUP_DEBRIS_TRIGGER )
 
 	phys = self.Chair:GetPhysicsObject()
 	if IsValid(phys) then
 		phys:EnableMotion(false)
 		phys:Sleep()
+	end
+
+	self.Chair.DoNotDuplicate = true
+	self.ChairMDL.DoNotDuplicate = true
+
+	function self.Chair:CanProperty()
+		return false
+	end
+	function self.ChairMDL:CanProperty()
+		return false
 	end
 
 end
@@ -118,21 +117,6 @@ end
 -- Quick fix for overriding the instrument chair seating
 hook.Add( 'CanPlayerEnterVehicle', 'DuckInstrumentChairHook', HookChair )
 hook.Add( 'PlayerUse', 'DuckInstrumentChairModelHook', HookChair )
-
-function ENT:PostEntityPaste( ply, _, entsTable )
-	if table.Count(entsTable) <= 1 then return end
-
-	for _, ent in pairs(entsTable) do
-		if ent:GetClass() == "prop_physics" then
-			ent:Remove()
-		end
-
-		if ent:GetClass() == "prop_vehicle_prisoner_pod" then
-			ent:Remove()
-		end
-	end
-	self:SetupChair()
-end
 
 function ENT:Use( ply )
 
