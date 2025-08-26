@@ -151,15 +151,17 @@ function ENT:AddOwner( ply )
 		net.WriteUInt( INSTNET_USE, 3 )
 	net.Send( ply )
 
-	ply.EntryPoint = ply:GetPos() - self:GetPos()
-	ply.EntryAngles = ply:EyeAngles()
 	ply.DuckInstrument = self
-
 	self:SetInstOwner(ply)
 
-	ply:EnterVehicle( self.Chair )
+	if IsValid(self.Chair) then
+		ply.InstEntryPoint = ply:GetPos() - self:GetPos()
+		ply.InstEntryAngles = ply:EyeAngles()
 
-	self:GetInstOwner():SetEyeAngles( Angle( 25, 90, 0 ) )
+		ply:EnterVehicle( self.Chair )
+
+		self:GetInstOwner():SetEyeAngles( Angle( 25, 90, 0 ) )
+	end
 
 end
 
@@ -176,10 +178,13 @@ function ENT:RemoveOwner()
 		net.WriteUInt( INSTNET_USE, 3 )
 	net.Send( ply )
 
-	ply:ExitVehicle( self.Chair )
+	if IsValid(self.Chair) then
+		ply:ExitVehicle( self.Chair )
 
-	ply:SetPos( ply.EntryPoint + self:GetPos() )
-	ply:SetEyeAngles( ply.EntryAngles )
+		ply:SetPos( ply.InstEntryPoint + self:GetPos() )
+		ply:SetEyeAngles( ply.InstEntryAngles )
+	end
+
 	ply.DuckInstrument = nil
 
 	self.MidiCurrent = nil
@@ -303,19 +308,10 @@ end )
 
 concommand.Add( 'duck_instrument_leave', function( ply, cmd, args )
 
-	if #args < 1 then return end -- no ent id
-
-	-- Get the instrument
-	local entid = args[1]
-	local ent = ents.GetByIndex( entid )
-
-	-- Filter out non-instruments
+	local ent = ply.DuckInstrument
 	if not IsValid( ent ) or not ent.DuckInstrument then return end
 
-	-- This instrument doesn't have an owner...
-	if not IsValid( ent:GetInstOwner() ) then return end
-
-	-- Leave instrument
+	-- This player is not using this instrument
 	if ply ~= ent:GetInstOwner() then return end
 
 	ent:RemoveOwner()
@@ -324,19 +320,10 @@ end )
 
 concommand.Add( 'duck_instrument_auto_stop', function( ply, cmd, args )
 
-	if #args < 1 then return end -- no ent id
-
-	-- Get the instrument
-	local entid = args[1]
-	local ent = ents.GetByIndex( entid )
-
-	-- Filter out non-instruments
+	local ent = ply.DuckInstrument
 	if not IsValid( ent ) or not ent.DuckInstrument then return end
 
-	-- This instrument doesn't have an owner...
-	if not IsValid( ent:GetInstOwner() ) then return end
-
-	-- Leave instrument
+	-- This player is not using this instrument
 	if ply ~= ent:GetInstOwner() then return end
 
 	ent.MidiCurrent = nil
@@ -353,9 +340,12 @@ local function leaveInst(ply)
 	local inst = ply.DuckInstrument
 	if not IsValid(inst) then return end
 
+	if ply ~= inst:GetInstOwner() then return end
+
 	inst:RemoveOwner()
 end
 hook.Add( 'PlayerDisconnected', 'DuckInstrument', leaveInst )
+hook.Add( 'PostPlayerDeath', 'DuckInstrument', leaveInst )
 
 hook.Add( 'PlayerLeaveVehicle', 'DuckInstrument', function( ply, veh )
 	if not veh.DuckInstrumentChair then return end

@@ -30,11 +30,11 @@ ENT.ControlKeys = {
 			inst.MidiStartTime = nil
 			inst.MidiCurrentNote = 1
 
-			RunConsoleCommand( 'duck_instrument_auto_stop', inst:EntIndex() )
+			RunConsoleCommand( 'duck_instrument_auto_stop' )
 
 			return
 		end
-		RunConsoleCommand( 'duck_instrument_leave', inst:EntIndex() )
+		RunConsoleCommand( 'duck_instrument_leave' )
 	end,
 
 	[KEY_SPACE] = function( inst, bPressed )
