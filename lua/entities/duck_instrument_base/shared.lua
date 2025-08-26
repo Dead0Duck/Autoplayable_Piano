@@ -6,7 +6,8 @@ ENT.DuckInstrument	= true
 
 ENT.Model		= Model( 'models/fishy/furniture/piano.mdl' )
 ENT.ChairModel	= Model( 'models/fishy/furniture/piano_seat.mdl' )
-ENT.MaxKeys		= 4 -- how many keys can be played at once
+-- ENT.MaxKeys		= 4 -- how many keys can be played at once (depracted)
+ENT.MaxDist		= 128 ^ 2	-- distance to use piano
 
 ENT.SoundDir	= 'GModTower/lobby/instruments/duckPiano/'
 ENT.SoundExt 	= '.wav'
@@ -30,11 +31,11 @@ ENT.ControlKeys = {
 			inst.MidiStartTime = nil
 			inst.MidiCurrentNote = 1
 
-			RunConsoleCommand( 'duck_instrument_auto_stop', inst:EntIndex() )
+			RunConsoleCommand( 'duck_instrument_auto_stop' )
 
 			return
 		end
-		RunConsoleCommand( 'duck_instrument_leave', inst:EntIndex() )
+		RunConsoleCommand( 'duck_instrument_leave' )
 	end,
 
 	[KEY_SPACE] = function( inst, bPressed )

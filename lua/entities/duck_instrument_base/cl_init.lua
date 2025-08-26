@@ -1,5 +1,9 @@
 include('shared.lua')
-list.Set('ContentCategoryIcons', '#duckInstrument.Category', 'icon16/music.png')
+list.Set('ContentCategoryIcons', language.GetPhrase('#duckInstrument.Category'), 'icon16/music.png')
+cvars.AddChangeCallback("gmod_language", function(_, oldV, newV)
+	list.Set('ContentCategoryIcons', oldV, nil)
+	list.Set('ContentCategoryIcons', newV, 'icon16/music.png')
+end, "duckInstruments.ent.category")
 
 ENT.DEBUG = true
 
