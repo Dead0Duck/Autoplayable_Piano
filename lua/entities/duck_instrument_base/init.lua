@@ -142,6 +142,18 @@ function ENT:Use( ply )
 
 end
 
+function ENT:Think()
+
+	if IsValid(self.Chair) then return end
+	local owner = self:GetInstOwner()
+	if not IsValid( owner ) then return end
+
+	if owner:GetPos():DistToSqr( self:GetPos() ) > self.MaxDist then
+		self:RemoveOwner()
+	end
+
+end
+
 function ENT:AddOwner( ply )
 
 	if IsValid( self:GetInstOwner() ) then return end
