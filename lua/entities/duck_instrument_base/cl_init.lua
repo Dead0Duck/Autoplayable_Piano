@@ -34,6 +34,7 @@ ENT.DefaultTextY = 10
 ENT.DefaultTextColor = Color( 150, 150, 150, 255 )
 ENT.DefaultTextColorActive = Color( 80, 80, 80, 255 )
 ENT.DefaultTextInfoColor = Color( 120, 120, 120, 150 )
+ENT.MidiProgressBarColor = Color( 255, 0, 0, 50 )
 
 ENT.MaterialDir	= ''
 ENT.KeyMaterials = {}
@@ -130,6 +131,8 @@ function ENT:Initialize()
 		net.WriteUInt( INSTNET_MIDISPAWN, 3 )
 
 	net.SendToServer()
+
+	self._midPBcolR, self._midPBcolG, self._midPBcolB, self._midPBcolA = self.MidiProgressBarColor:Unpack()
 
 	self:PrecacheMaterials()
 end
@@ -377,7 +380,7 @@ function ENT:DrawHUD()
 	surface.SetDrawColor(0,0,0,128)
 	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, maxWidth, 30)
 
-	surface.SetDrawColor(255,0,0,50)
+	surface.SetDrawColor(self._midPBcolR, self._midPBcolG, self._midPBcolB, self._midPBcolA)
 	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, curWidth, 30)
 
 	--[[
