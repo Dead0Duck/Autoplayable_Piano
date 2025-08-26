@@ -9,7 +9,9 @@ ENT.ChairModel	= Model( 'models/fishy/furniture/piano_seat.mdl' )
 -- ENT.MaxKeys		= 4 -- how many keys can be played at once (depracted)
 ENT.MaxDist		= 128 ^ 2	-- distance to use piano
 
-ENT.SoundDir	= 'GModTower/lobby/instruments/duckPiano/'
+ENT.ShowNoteEffect	= true	-- should we show note effect when key is pressed
+ENT.NoteEffectSize	= 1		-- note effect size
+
 ENT.SoundExt 	= '.wav'
 
 ENT.MidiCurrent = nil
@@ -100,6 +102,8 @@ local keys = {
 	B = 12,
 }
 function ENT:NoteEffect( key )
+	if not self.ShowNoteEffect then return end
+
 	local pos = keys[string.sub(key, 1, 1)]
 	if string.match(key, '#') then
 		pos = pos + 1
@@ -112,12 +116,18 @@ function ENT:NoteEffect( key )
 	end
 	pos = math.Fit(pos, 24, 84, -3.8, 4) * 10
 
-	local angle = self:GetAngles()
-	local offset = angle:Up() * 25 + angle:Forward() * 60 + angle:Right() * -(pos + 12)
+	local offset = self:GetNoteEffectPos(pos)
 
+	local effSize = self.NoteEffectSize or 1
 	local eff = EffectData()
 	eff:SetOrigin( self:GetPos() + offset )
+	eff:SetScale(self.NoteEffectSize or 1)
 	util.Effect( 'musicnotes', eff, true, true )
+end
+
+function ENT:GetNoteEffectPos(keyPos)
+	local angle = self:GetAngles()
+	return angle:Up() * 25 + angle:Forward() * 60 + angle:Right() * -(keyPos + 12)
 end
 
 function ENT:SetupDataTables()
