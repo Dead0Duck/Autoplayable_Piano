@@ -3,6 +3,9 @@ duckInstruments.songs = {}
 duckInstruments.songNames = {}
 duckInstruments.songCovers = {}
 
+local function EmptyFunc()
+end
+
 local curCover
 
 local function AddSong(n, v)
@@ -49,8 +52,8 @@ local function ReloadSongs()
 	end
 
 	curCover = nil
-	duckInstruments.AddSong = nil
-	duckInstruments.SetCover = nil
+	duckInstruments.AddSong = EmptyFunc
+	duckInstruments.SetCover = EmptyFunc
 end
 ReloadSongs()
 

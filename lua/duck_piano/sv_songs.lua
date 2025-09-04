@@ -1,6 +1,9 @@
 duckInstruments = {}
 duckInstruments.songNames = {}
 
+local function EmptyFunc()
+end
+
 local function AddSong(n)
 	if not isstring(n) then return end
 
@@ -14,8 +17,7 @@ function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
-function duckInstruments.SetCover()
-end
+duckInstruments.SetCover = EmptyFunc
 
 local function ReloadSongs()
 	duckInstruments.songNames = {}
@@ -37,7 +39,7 @@ local function ReloadSongs()
 		include('duck_piano/songs/' .. fileName)
 	end
 
-	duckInstruments.AddSong = nil
+	duckInstruments.AddSong = EmptyFunc
 end
 ReloadSongs()
 
