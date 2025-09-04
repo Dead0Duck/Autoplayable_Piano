@@ -179,6 +179,7 @@ function ENT:Think()
 		return
 	end
 
+	if vgui.GetKeyboardFocus() then return end
 	-- Get keys
 	for key, keyData in pairs( self.Keys ) do
 
@@ -625,6 +626,7 @@ function ENT:MidiInterface()
 		songList:SetDirty(true)
 		songList:InvalidateLayout()
 	end
+	searchBar:RequestFocus()
 
 
 	songList = vgui.Create('DListView', frame)
