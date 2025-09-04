@@ -1,7 +1,5 @@
 include('shared.lua')
 
-ENT.AllowAdvancedMode = true
-
 -- For drawing purposes
 -- Override by adding MatWidth/MatHeight to key data
 ENT.DefaultMatWidth = 32

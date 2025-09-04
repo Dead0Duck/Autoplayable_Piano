@@ -1,8 +1,10 @@
-include('shared.lua')
-list.Set('ContentCategoryIcons', language.GetPhrase('#duckInstrument.Category'), 'icon16/music.png')
+include("shared.lua")
+include("cl_midi_hud.lua")
+
+list.Set("ContentCategoryIcons", language.GetPhrase("#duckInstrument.Category"), "icon16/music.png")
 cvars.AddChangeCallback("gmod_language", function(_, oldV, newV)
-	list.Set('ContentCategoryIcons', oldV, nil)
-	list.Set('ContentCategoryIcons', newV, 'icon16/music.png')
+	list.Set("ContentCategoryIcons", oldV, nil)
+	list.Set("ContentCategoryIcons", newV, "icon16/music.png")
 end, "duckInstruments.ent.category")
 
 ENT.DEBUG = true
@@ -12,8 +14,6 @@ ENT.NoteKeys = {}
 ENT.KeysDown = {}
 ENT.KeysWasDown = {}
 
-ENT.AllowAdvancedMode = true
-ENT.AdvancedMode = true
 ENT.ShiftMode = false
 
 ENT.PageTurnSound = Sound( 'gmodtower/inventory/move_paper.wav' )
@@ -333,52 +333,10 @@ function ENT:DrawHUD()
 
 	end
 
+	-- Midi Info
 	if self.MidiCurrent then
-		draw.DrawText( Format( language.GetPhrase('duckInstrument.AutoPlaying'), self.MidiName or '???'), 'DuckInstrumentKeyLabel',
-			mainX + ( mainWidth / 2 ), mainY + 60,
-			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-	elseif self:CanUseAutoPlay() then
-		draw.DrawText( '#duckInstrument.Alt', 'DuckInstrumentKeyLabel',
-			mainX + ( mainWidth / 2 ), mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
+		self:DrawHUDMidi()
 	end
-
-	if not self.MidiCurrent then return end
-
-	local curTime = CurTime() - self.MidiStartTime
-	draw.DrawText( string.FormattedTime(curTime, '%02i:%02i'), 'DuckInstrumentKeyLabel',
-			mainX + 70, mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_RIGHT )
-
-	local maxTime = self.MidiCurrent[#self.MidiCurrent]
-	draw.DrawText( string.FormattedTime(maxTime, '%02i:%02i'), 'DuckInstrumentKeyLabel',
-			mainX + mainWidth - 70, mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_LEFT )
-
-	local maxWidth = mainWidth - 150
-	local curWidth = math.min((curTime / maxTime) * maxWidth, maxWidth)
-
-	surface.SetDrawColor(0,0,0,128)
-	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, maxWidth, 30)
-
-	surface.SetDrawColor(self._midPBcolR, self._midPBcolG, self._midPBcolB, self._midPBcolA)
-	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, curWidth, 30)
-
-	--[[
-	-- Advanced mode
-	if self.AllowAdvancedMode and not self.AdvancedMode then
-
-		draw.DrawText( 'CONTROL FOR ADVANCED MODE', 'DuckInstrumentKeyLabel', 
-						mainX + ( mainWidth / 2 ), mainY + mainHeight + 30, 
-						self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-						
-	elseif self.AllowAdvancedMode and self.AdvancedMode then
-	
-		draw.DrawText( 'CONTROL FOR BASIC MODE', 'DuckInstrumentKeyLabel', 
-						mainX + ( mainWidth / 2 ), mainY + mainHeight + 30, 
-						self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-	end
-	--]]
 
 end
 
@@ -409,7 +367,7 @@ function ENT:OpenSheetMusic()
 
 	local width = self.BrowserHUD.Width
 
-	if self.BrowserHUD.AdvWidth and self.AdvancedMode then
+	if self.BrowserHUD.AdvWidth then
 		width = self.BrowserHUD.AdvWidth
 	end
 
@@ -476,7 +434,6 @@ function ENT:Shutdown()
 
 	self:CloseSheetMusic()
 
-	--self.AdvancedMode = false
 	self.ShiftMode = false
 
 	--[[
@@ -501,9 +458,9 @@ end
 
 hook.Add( 'HUDPaint', 'DuckInstrumentPaint', function()
 
-	if IsValid( LocalPlayer().duckInstrument ) then
+	local inst = LocalPlayer().duckInstrument
+	if IsValid( inst ) then
 
-		local inst = LocalPlayer().duckInstrument
 		inst:DrawHUD()
 
 		surface.SetDrawColor( 0, 0, 0, 180 )
@@ -511,8 +468,10 @@ hook.Add( 'HUDPaint', 'DuckInstrumentPaint', function()
 
 		if inst.MidiCurrent then
 			draw.SimpleText( '#duckInstrument.Tab1', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
-		else
+		elseif inst:CanUseAutoPlay() then
 			draw.SimpleText( '#duckInstrument.Tab2', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
+		else
+			draw.SimpleText( '#duckInstrument.Tab2_NoAutoplay', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
 		end
 
 	end
@@ -596,6 +555,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if not duckInstruments.songs[index] then return end
 
 		ent.MidiCurrent = duckInstruments.songs[index]
+		ent.MidiCurrentId = index
 		ent.MidiStartTime = net.ReadDouble()
 		ent.MidiCurrentNote = 1
 
@@ -658,6 +618,7 @@ function ENT:MidiInterface()
 
 		self.MidiName = duckInstruments.songNames[songId]
 		self.MidiCurrent = duckInstruments.songs[songId]
+		self.MidiCurrentId = songId
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
 

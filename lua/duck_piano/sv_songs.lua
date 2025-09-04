@@ -14,8 +14,10 @@ function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
+function duckInstruments.SetCover()
+end
+
 local function ReloadSongs()
-	duckInstruments = {}
 	duckInstruments.songNames = {}
 
 	-- Разрешить добавление песен только из songs/*
