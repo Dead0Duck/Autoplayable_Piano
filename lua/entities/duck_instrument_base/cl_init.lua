@@ -146,7 +146,6 @@ function ENT:Think()
 		return
 	end
 
-	if vgui.GetKeyboardFocus() then return end		-- If there is panels, don't recognize keys
 	if not self.MidiCurrent and self.DelayKey and self.DelayKey > CurTime() then return end
 
 	-- Update last pressed
@@ -156,6 +155,8 @@ function ENT:Think()
 
 	-- Get control keys
 	for key, keyData in pairs( self.ControlKeys ) do
+		if vgui.GetKeyboardFocus() then continue end
+		if gui.IsGameUIVisible() then continue end
 		if self.MidiCurrent and not autoPlayKeys[key] then continue end
 
 		-- Update key status
@@ -578,7 +579,7 @@ function ENT:MidiInterface()
 	if not self:CanUseAutoPlay() then return end
 
 	local frame = vgui.Create('DFrame')
-	frame:SetSize(450,300)
+	frame:SetSize(450,400)
 	frame:Center()
 	frame:SetTitle('#duckInstrument.SongList')
 	frame:SetDraggable(true)
@@ -593,17 +594,51 @@ function ENT:MidiInterface()
 		end
 	end
 
-	local songList = vgui.Create('DListView', frame)
+	local topBar = frame:Add('DPanel')
+	topBar:SetPaintBackground(false)
+	topBar:Dock(TOP)
+	topBar:DockMargin(0, 0, 0, 5)
+
+	local songList
+
+	local searchBar = topBar:Add("DTextEntry")
+	searchBar:Dock(RIGHT)
+	searchBar:DockMargin(0, 0, 120, 0)
+	searchBar:SetWide(200)
+	searchBar:SetPlaceholderText("#spawnmenu.search")
+	searchBar:SetUpdateOnType(true)
+	searchBar.songs = {}
+
+	searchBar.OnValueChange = function(self, v)
+		local isEmpty = (v == "")
+		v = string.lower(v)
+
+		for i = 1, #self.songs do
+			local pnl = self.songs[i]
+			if isEmpty or string.find(pnl.search or "", v, 1, true) then
+				pnl:Show()
+			else
+				pnl:Hide()
+			end
+		end
+
+		songList:SetDirty(true)
+		songList:InvalidateLayout()
+	end
+
+
+	songList = vgui.Create('DListView', frame)
 	songList:SetMultiSelect(false)
-	songList:SetPos(5,30)
-	songList:SetSize(440, 260)
+	songList:Dock(FILL)
 	songList:AddColumn('#duckInstrument.Songs')
 	songList.OnRowSelected = function(lst, _, pnl)
 		if not IsValid( self ) then
 			frame:Close()
 			return
 		end
-		if not IsValid( LocalPlayer().duckInstrument ) or LocalPlayer().duckInstrument ~= self then
+
+		local inst = LocalPlayer().duckInstrument
+		if not IsValid(inst) or inst ~= self then
 			frame:Close()
 			return
 		end
@@ -633,7 +668,10 @@ function ENT:MidiInterface()
 
 	for i = 1, #duckInstruments.songNames do
 		if not self:CanUseAutoPlay(i) then continue end
-		songList:AddLine(duckInstruments.songNames[i]).songId = i
+		local pnl = songList:AddLine(duckInstruments.songNames[i])
+		pnl.songId = i
+		pnl.search = string.lower(duckInstruments.songNames[i])
+		searchBar.songs[#searchBar.songs + 1] = pnl
 	end
 	songList:SortByColumn( 1 )
 end
