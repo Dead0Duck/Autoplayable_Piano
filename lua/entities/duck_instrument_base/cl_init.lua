@@ -156,6 +156,7 @@ function ENT:Think()
 		return
 	end
 
+	if vgui.GetKeyboardFocus() then return end		-- If there is panels, don't recognize keys
 	if not self.MidiCurrent and self.DelayKey and self.DelayKey > CurTime() then return end
 
 	-- Update last pressed
