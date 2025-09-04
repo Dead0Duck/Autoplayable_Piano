@@ -39,16 +39,6 @@ ENT.MidiProgressBarColor = Color( 255, 0, 0, 50 )
 ENT.MaterialDir	= ''
 ENT.KeyMaterials = {}
 
-ENT.MainHUD = {
-	Material = nil,
-	X = 0,
-	Y = 0,
-	TextureWidth = 128,
-	TextureHeight = 128,
-	Width = 128,
-	Height = 128,
-}
-
 ENT.AdvMainHUD = {
 	Material = nil,
 	X = 0,
@@ -314,18 +304,8 @@ function ENT:DrawHUD()
 
 	local mainX, mainY, mainWidth, mainHeight
 
-	-- Draw main
-	if self.MainHUD.Material and not self.AdvancedMode then
-
-		mainX, mainY, mainWidth, mainHeight = self.MainHUD.X, self.MainHUD.Y, self.MainHUD.Width, self.MainHUD.Height
-
-		surface.SetTexture( self.MainHUD.MatID )
-		surface.DrawTexturedRect( mainX, mainY, self.MainHUD.TextureWidth, self.MainHUD.TextureHeight )
-
-	end
-
 	-- Advanced main
-	if self.AdvMainHUD.Material and self.AdvancedMode then
+	if self.AdvMainHUD.Material then
 
 		mainX, mainY, mainWidth, mainHeight = self.AdvMainHUD.X, self.AdvMainHUD.Y, self.AdvMainHUD.Width, self.AdvMainHUD.Height
 
@@ -412,10 +392,6 @@ function ENT:PrecacheMaterials()
 		if type( keyMaterial ) == 'string' then
 			self.KeyMaterialIDs[name] = surface.GetTextureID( keyMaterial )
 		end
-	end
-
-	if self.MainHUD.Material then
-		self.MainHUD.MatID = surface.GetTextureID( self.MainHUD.Material )
 	end
 
 	if self.AdvMainHUD.Material then
@@ -510,18 +486,6 @@ function ENT:Shutdown()
 	end
 	--]]
 end
-
---[[
-function ENT:ToggleAdvancedMode()
-	self.AdvancedMode = not self.AdvancedMode
-	
-	if IsValid( self.Browser ) then
-		self:CloseSheetMusic()
-		self:OpenSheetMusic()
-	end
-	
-end
---]]
 
 function ENT:ToggleShiftMode()
 	self.ShiftMode = not self.ShiftMode

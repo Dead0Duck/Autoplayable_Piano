@@ -25,16 +25,6 @@ ENT.KeyMaterials = {
 	['full'] = ENT.MaterialDir .. 'full',
 }
 
-ENT.MainHUD = {
-	Material = 'gmod_tower/instruments/piano/piano',
-	X = ( ScrW() / 2 ) - ( 313 / 2 ),
-	Y = ScrH() - 316,
-	TextureWidth = 512,
-	TextureHeight = 256,
-	Width = 313,
-	Height = 195,
-}
-
 ENT.AdvMainHUD = {
 	Material = 'gmod_tower/instruments/piano/piano_large',
 	X = ( ScrW() / 2 ) - ( 940 / 2 ),
@@ -49,7 +39,7 @@ ENT.BrowserHUD = {
 	URL = 'https://anthfgreco.github.io/playable-piano-v2',
 	Show = true, -- display the sheet music?
 	X = ScrW() / 2,
-	Y = ENT.MainHUD.Y - 190,
+	Y = ENT.AdvMainHUD.Y - 191,
 	Width = 450,
 	Height = 250,
 	AdvWidth = 600,
