@@ -88,11 +88,6 @@ function ENT:GetSound( snd )
 	return self.SoundDir .. snd .. self.SoundExt
 end
 
--- Returns the approximate 'fitted' number based on linear regression.
-function math.Fit( val, valMin, valMax, outMin, outMax )
-	return ( val - valMin ) * ( outMax - outMin ) / ( valMax - valMin ) + outMin
-end
-
 local keys = {
 	C = 0,
 	D = 2,
@@ -115,7 +110,7 @@ function ENT:NoteEffect( key )
 		local offset = tonumber( string.sub(key, 2, 3) )
 		pos = pos + 12 * offset
 	end
-	pos = math.Fit(pos, 24, 84, -3.8, 4) * 10
+	pos = math.Remap(pos, 24, 84, -3.8, 4) * 10
 
 	local offset = self:GetNoteEffectPos(pos)
 
