@@ -1,19 +1,19 @@
-include('shared.lua')
-list.Set('ContentCategoryIcons', language.GetPhrase('#duckInstrument.Category'), 'icon16/music.png')
-cvars.AddChangeCallback("gmod_language", function(_, oldV, newV)
-	list.Set('ContentCategoryIcons', oldV, nil)
-	list.Set('ContentCategoryIcons', newV, 'icon16/music.png')
-end, "duckInstruments.ent.category")
+include("shared.lua")
+include("cl_midi_hud.lua")
+include("cl_midi_songlist_frame.lua")
 
-ENT.DEBUG = true
+list.Set("ContentCategoryIcons", language.GetPhrase("#duckInstrument.Category"), "icon16/music.png")
+cvars.AddChangeCallback("gmod_language", function(_, oldV, newV)
+	list.Set("ContentCategoryIcons", oldV, nil)
+	list.Set("ContentCategoryIcons", newV, "icon16/music.png")
+end, "duckInstruments.ent.category")
 
 ENT.MidiCurrentNote = 1
 ENT.NoteKeys = {}
 ENT.KeysDown = {}
+ENT.MidiKeysDown = {}
 ENT.KeysWasDown = {}
 
-ENT.AllowAdvancedMode = true
-ENT.AdvancedMode = true
 ENT.ShiftMode = false
 
 ENT.PageTurnSound = Sound( 'gmodtower/inventory/move_paper.wav' )
@@ -34,19 +34,10 @@ ENT.DefaultTextY = 10
 ENT.DefaultTextColor = Color( 150, 150, 150, 255 )
 ENT.DefaultTextColorActive = Color( 80, 80, 80, 255 )
 ENT.DefaultTextInfoColor = Color( 120, 120, 120, 150 )
+ENT.MidiProgressBarColor = Color( 255, 0, 0, 50 )
 
 ENT.MaterialDir	= ''
 ENT.KeyMaterials = {}
-
-ENT.MainHUD = {
-	Material = nil,
-	X = 0,
-	Y = 0,
-	TextureWidth = 128,
-	TextureHeight = 128,
-	Width = 128,
-	Height = 128,
-}
 
 ENT.AdvMainHUD = {
 	Material = nil,
@@ -101,15 +92,12 @@ function ENT:MidiNotePlay(note)
 	self:OnRegisteredKeyPlayed(noteName, true)
 
 	if not key then return true end
-	if string.match(noteName, '#') then
-		self.ShiftMode = true
-	end
-	self.KeysDown[ key ] = true
+
+	self.MidiKeysDown[noteName] = true
 	timer.Create( 'duck_inst_note' .. noteName, 0.04, 1, function()
 		if not IsValid(self) then return end
 
-		self.KeysDown[ key ] = false
-		self.ShiftMode = false
+		self.MidiKeysDown[noteName] = nil
 	end)
 
 	self:NoteEffect(noteName)
@@ -130,6 +118,8 @@ function ENT:Initialize()
 		net.WriteUInt( INSTNET_MIDISPAWN, 3 )
 
 	net.SendToServer()
+
+	self._midPBcolR, self._midPBcolG, self._midPBcolB, self._midPBcolA = self.MidiProgressBarColor:Unpack()
 
 	self:PrecacheMaterials()
 end
@@ -162,6 +152,8 @@ function ENT:Think()
 
 	-- Get control keys
 	for key, keyData in pairs( self.ControlKeys ) do
+		if vgui.GetKeyboardFocus() then continue end
+		if gui.IsGameUIVisible() then continue end
 		if self.MidiCurrent and not autoPlayKeys[key] then continue end
 
 		-- Update key status
@@ -184,6 +176,7 @@ function ENT:Think()
 		return
 	end
 
+	if vgui.GetKeyboardFocus() then return end
 	-- Get keys
 	for key, keyData in pairs( self.Keys ) do
 
@@ -270,38 +263,36 @@ end
 
 function ENT:DrawKey( mainX, mainY, key, keyData, bShiftMode )
 
-	if keyData.Material and (
-		( self.ShiftMode and bShiftMode and self.KeysDown[key] ) or
-		   ( not self.ShiftMode and not bShiftMode and self.KeysDown[key] ) ) then
+	local isDown = self.MidiCurrent and self.MidiKeysDown[keyData.Sound]
+		or (self.ShiftMode and bShiftMode and self.KeysDown[key]) 
+		or (not self.ShiftMode and not bShiftMode and self.KeysDown[key])
+
+	if keyData.Material and isDown then
 		surface.SetTexture( self.KeyMaterialIDs[ keyData.Material ] )
 		surface.DrawTexturedRect( mainX + keyData.X, mainY + keyData.Y, self.DefaultMatWidth, self.DefaultMatHeight )
 	end
 
-	-- Draw keys
-	if keyData.Label and not self.MidiCurrent then
+	if not keyData.Label then return end
+	if self.MidiCurrent then return end
 
-		local offsetX = self.DefaultTextX
-		local offsetY = self.DefaultTextY
-		local color = self.DefaultTextColor
+	local offsetX = self.DefaultTextX
+	local offsetY = self.DefaultTextY
+	local color = self.DefaultTextColor
 
-		if ( self.ShiftMode and bShiftMode and input.IsKeyDown( key ) ) or
-		   ( not self.ShiftMode and not bShiftMode and input.IsKeyDown( key ) ) then
-
-			color = self.DefaultTextColorActive
-			if keyData.AColor then color = keyData.AColor end
-		else
-			if keyData.Color then color = keyData.Color end
-		end
-
-		-- Override positions, if needed
-		if keyData.TextX then offsetX = keyData.TextX end
-		if keyData.TextY then offsetY = keyData.TextY end
-
-		draw.DrawText( keyData.Label, 'DuckInstrumentKeyLabel',
-			mainX + keyData.X + offsetX,
-			mainY + keyData.Y + offsetY,
-			color, TEXT_ALIGN_CENTER )
+	if isDown then
+		color = self.DefaultTextColorActive
+		if keyData.AColor then color = keyData.AColor end
+	else
+		if keyData.Color then color = keyData.Color end
 	end
+
+	if keyData.TextX then offsetX = keyData.TextX end
+	if keyData.TextY then offsetY = keyData.TextY end
+
+	draw.DrawText( keyData.Label, 'DuckInstrumentKeyLabel',
+		mainX + keyData.X + offsetX,
+		mainY + keyData.Y + offsetY,
+		color, TEXT_ALIGN_CENTER )
 end
 
 function ENT:DrawHUD()
@@ -310,18 +301,8 @@ function ENT:DrawHUD()
 
 	local mainX, mainY, mainWidth, mainHeight
 
-	-- Draw main
-	if self.MainHUD.Material and not self.AdvancedMode then
-
-		mainX, mainY, mainWidth, mainHeight = self.MainHUD.X, self.MainHUD.Y, self.MainHUD.Width, self.MainHUD.Height
-
-		surface.SetTexture( self.MainHUD.MatID )
-		surface.DrawTexturedRect( mainX, mainY, self.MainHUD.TextureWidth, self.MainHUD.TextureHeight )
-
-	end
-
 	-- Advanced main
-	if self.AdvMainHUD.Material and self.AdvancedMode then
+	if self.AdvMainHUD.Material then
 
 		mainX, mainY, mainWidth, mainHeight = self.AdvMainHUD.X, self.AdvMainHUD.Y, self.AdvMainHUD.Width, self.AdvMainHUD.Height
 
@@ -349,52 +330,10 @@ function ENT:DrawHUD()
 
 	end
 
+	-- Midi Info
 	if self.MidiCurrent then
-		draw.DrawText( Format( language.GetPhrase('duckInstrument.AutoPlaying'), self.MidiName or '???'), 'DuckInstrumentKeyLabel',
-			mainX + ( mainWidth / 2 ), mainY + 60,
-			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-	elseif self:CanUseAutoPlay() then
-		draw.DrawText( '#duckInstrument.Alt', 'DuckInstrumentKeyLabel',
-			mainX + ( mainWidth / 2 ), mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
+		self:DrawHUDMidi()
 	end
-
-	if not self.MidiCurrent then return end
-
-	local curTime = CurTime() - self.MidiStartTime
-	draw.DrawText( string.FormattedTime(curTime, '%02i:%02i'), 'DuckInstrumentKeyLabel',
-			mainX + 70, mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_RIGHT )
-
-	local maxTime = self.MidiCurrent[#self.MidiCurrent]
-	draw.DrawText( string.FormattedTime(maxTime, '%02i:%02i'), 'DuckInstrumentKeyLabel',
-			mainX + mainWidth - 70, mainY + mainHeight + 30,
-			self.DefaultTextInfoColor, TEXT_ALIGN_LEFT )
-
-	local maxWidth = mainWidth - 150
-	local curWidth = math.min((curTime / maxTime) * maxWidth, maxWidth)
-
-	surface.SetDrawColor(0,0,0,128)
-	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, maxWidth, 30)
-
-	surface.SetDrawColor(255,0,0,50)
-	surface.DrawRect(mainX + 75, mainY + mainHeight + 25, curWidth, 30)
-
-	--[[
-	-- Advanced mode
-	if self.AllowAdvancedMode and not self.AdvancedMode then
-
-		draw.DrawText( 'CONTROL FOR ADVANCED MODE', 'DuckInstrumentKeyLabel', 
-						mainX + ( mainWidth / 2 ), mainY + mainHeight + 30, 
-						self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-						
-	elseif self.AllowAdvancedMode and self.AdvancedMode then
-	
-		draw.DrawText( 'CONTROL FOR BASIC MODE', 'DuckInstrumentKeyLabel', 
-						mainX + ( mainWidth / 2 ), mainY + mainHeight + 30, 
-						self.DefaultTextInfoColor, TEXT_ALIGN_CENTER )
-	end
-	--]]
 
 end
 
@@ -408,10 +347,6 @@ function ENT:PrecacheMaterials()
 		if type( keyMaterial ) == 'string' then
 			self.KeyMaterialIDs[name] = surface.GetTextureID( keyMaterial )
 		end
-	end
-
-	if self.MainHUD.Material then
-		self.MainHUD.MatID = surface.GetTextureID( self.MainHUD.Material )
 	end
 
 	if self.AdvMainHUD.Material then
@@ -429,7 +364,7 @@ function ENT:OpenSheetMusic()
 
 	local width = self.BrowserHUD.Width
 
-	if self.BrowserHUD.AdvWidth and self.AdvancedMode then
+	if self.BrowserHUD.AdvWidth then
 		width = self.BrowserHUD.AdvWidth
 	end
 
@@ -496,7 +431,6 @@ function ENT:Shutdown()
 
 	self:CloseSheetMusic()
 
-	--self.AdvancedMode = false
 	self.ShiftMode = false
 
 	--[[
@@ -506,18 +440,6 @@ function ENT:Shutdown()
 	end
 	--]]
 end
-
---[[
-function ENT:ToggleAdvancedMode()
-	self.AdvancedMode = not self.AdvancedMode
-	
-	if IsValid( self.Browser ) then
-		self:CloseSheetMusic()
-		self:OpenSheetMusic()
-	end
-	
-end
---]]
 
 function ENT:ToggleShiftMode()
 	self.ShiftMode = not self.ShiftMode
@@ -533,9 +455,9 @@ end
 
 hook.Add( 'HUDPaint', 'DuckInstrumentPaint', function()
 
-	if IsValid( LocalPlayer().duckInstrument ) then
+	local inst = LocalPlayer().duckInstrument
+	if IsValid( inst ) then
 
-		local inst = LocalPlayer().duckInstrument
 		inst:DrawHUD()
 
 		surface.SetDrawColor( 0, 0, 0, 180 )
@@ -543,8 +465,10 @@ hook.Add( 'HUDPaint', 'DuckInstrumentPaint', function()
 
 		if inst.MidiCurrent then
 			draw.SimpleText( '#duckInstrument.Tab1', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
-		else
+		elseif inst:CanUseAutoPlay() then
 			draw.SimpleText( '#duckInstrument.Tab2', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
+		else
+			draw.SimpleText( '#duckInstrument.Tab2_NoAutoplay', 'DuckInstrumentNotice', ScrW() / 2, ScrH() - 35, Color(255, 255, 255), TEXT_ALIGN_CENTER, TEXT_ALIGN_CENTER, 1 )
 		end
 
 	end
@@ -628,6 +552,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		if not duckInstruments.songs[index] then return end
 
 		ent.MidiCurrent = duckInstruments.songs[index]
+		ent.MidiCurrentId = index
 		ent.MidiStartTime = net.ReadDouble()
 		ent.MidiCurrentNote = 1
 
@@ -643,68 +568,3 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	end
 
 end )
-
-
-function ENT:MidiInterface()
-	if IsValid(self.MidiPanel) or self.MidiCurrent then return end
-	if not self:CanUseAutoPlay() then return end
-
-	local frame = vgui.Create('DFrame')
-	frame:SetSize(450,300)
-	frame:Center()
-	frame:SetTitle('#duckInstrument.SongList')
-	frame:SetDraggable(true)
-	frame:ShowCloseButton(true)
-	frame:MakePopup()
-	self.MidiPanel = frame
-
-	frame.ent = self
-	function frame:Think()
-		if not IsValid(self.ent) or LocalPlayer().duckInstrument ~= self.ent then
-			self:Remove()
-		end
-	end
-
-	local songList = vgui.Create('DListView', frame)
-	songList:SetMultiSelect(false)
-	songList:SetPos(5,30)
-	songList:SetSize(440, 260)
-	songList:AddColumn('#duckInstrument.Songs')
-	songList.OnRowSelected = function(lst, _, pnl)
-		if not IsValid( self ) then
-			frame:Close()
-			return
-		end
-		if not IsValid( LocalPlayer().duckInstrument ) or LocalPlayer().duckInstrument ~= self then
-			frame:Close()
-			return
-		end
-
-		local songId = pnl.songId
-		if not self:CanUseAutoPlay(songId) then
-			frame:Close()
-			return
-		end
-
-		self:CloseSheetMusic()
-
-		self.MidiName = duckInstruments.songNames[songId]
-		self.MidiCurrent = duckInstruments.songs[songId]
-		self.MidiStartTime = CurTime()
-		self.MidiCurrentNote = 1
-
-		net.Start('DuckInstrumentNetwork')
-			net.WriteEntity( self )
-			net.WriteUInt( INSTNET_MIDISTART, 3 )
-			net.WriteUInt( songId, 7 )
-		net.SendToServer()
-
-		frame:Close()
-	end
-
-	for i = 1, #duckInstruments.songNames do
-		if not self:CanUseAutoPlay(i) then continue end
-		songList:AddLine(duckInstruments.songNames[i]).songId = i
-	end
-	songList:SortByColumn( 1 )
-end

@@ -1,6 +1,12 @@
 duckInstruments = {}
 duckInstruments.songs = {}
 duckInstruments.songNames = {}
+duckInstruments.songCovers = {}
+
+local function EmptyFunc()
+end
+
+local curCover
 
 local function AddSong(n, v)
 	if not isstring(n) then return end
@@ -9,35 +15,59 @@ local function AddSong(n, v)
 	local i = #duckInstruments.songs + 1
 	duckInstruments.songs[i] = v
 	duckInstruments.songNames[i] = n
+	duckInstruments.songCovers[i] = curCover
 
 	return i
+end
+
+local function SetCover(cover)
+	curCover = cover or nil
 end
 
 function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
+function duckInstruments.GetSongCover(id)
+	return duckInstruments.songCovers[id]
+end
+
+function duckInstruments.GetSongNotesCount(id)
+	return duckInstruments.songs[id] and #duckInstruments.songs[id] / 2
+end
+
+function duckInstruments.GetSongDuration(id)
+	local song = duckInstruments.songs[id]
+	return song and song[#song]
+end
+
+
 local function ReloadSongs()
-	duckInstruments = {}
 	duckInstruments.songs = {}
 	duckInstruments.songNames = {}
+	duckInstruments.songCovers = {}
 
 	-- Разрешить добавление песен только из songs/*
 	local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
 	duckInstruments.AddSong = AddSong
+	duckInstruments.SetCover = SetCover
 
 	for _,folder in pairs(songFolders) do
 		local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
 		for _,fileName in pairs(songFiles) do
+			curCover = nil
 			include('duck_piano/songs/' .. folder .. '/' .. fileName)
 		end
 	end
 
 	for _,fileName in pairs(songFiles) do
+		curCover = nil
 		include('duck_piano/songs/' .. fileName)
 	end
 
-	duckInstruments.AddSong = nil
+	curCover = nil
+	duckInstruments.AddSong = EmptyFunc
+	duckInstruments.SetCover = EmptyFunc
 end
 ReloadSongs()
 

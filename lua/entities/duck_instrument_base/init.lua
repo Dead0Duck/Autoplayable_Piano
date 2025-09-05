@@ -1,4 +1,6 @@
 AddCSLuaFile( 'cl_init.lua' )
+AddCSLuaFile( 'cl_midi_hud.lua' )
+AddCSLuaFile( 'cl_midi_songlist_frame.lua' )
 AddCSLuaFile( 'shared.lua' )
 include( 'shared.lua' )
 
@@ -159,6 +161,7 @@ function ENT:AddOwner( ply )
 		self:GetInstOwner():SetEyeAngles( Angle( 25, 90, 0 ) )
 	end
 
+	self:OnwerAdded(ply)
 end
 
 function ENT:RemoveOwner()
@@ -191,6 +194,13 @@ function ENT:RemoveOwner()
 		net.WriteUInt( INSTNET_MIDISTOP, 3 )
 	net.Broadcast()
 
+	self:OnwerRemoved(ply)
+end
+
+function ENT:OnwerAdded(ply)
+end
+
+function ENT:OnwerRemoved(ply)
 end
 
 --[[ function ENT:NetworkKeys( keys )
