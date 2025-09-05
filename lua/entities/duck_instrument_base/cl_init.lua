@@ -1,13 +1,12 @@
 include("shared.lua")
 include("cl_midi_hud.lua")
+include("cl_midi_songlist_frame.lua")
 
 list.Set("ContentCategoryIcons", language.GetPhrase("#duckInstrument.Category"), "icon16/music.png")
 cvars.AddChangeCallback("gmod_language", function(_, oldV, newV)
 	list.Set("ContentCategoryIcons", oldV, nil)
 	list.Set("ContentCategoryIcons", newV, "icon16/music.png")
 end, "duckInstruments.ent.category")
-
-ENT.DEBUG = true
 
 ENT.MidiCurrentNote = 1
 ENT.NoteKeys = {}
@@ -265,8 +264,8 @@ end
 function ENT:DrawKey( mainX, mainY, key, keyData, bShiftMode )
 
 	local isDown = self.MidiCurrent and self.MidiKeysDown[keyData.Sound]
-		or (self.ShiftMode and bShiftMode and input.IsKeyDown(key)) 
-		or (not self.ShiftMode and not bShiftMode and input.IsKeyDown( key ))
+		or (self.ShiftMode and bShiftMode and self.KeysDown[key]) 
+		or (not self.ShiftMode and not bShiftMode and self.KeysDown[key])
 
 	if keyData.Material and isDown then
 		surface.SetTexture( self.KeyMaterialIDs[ keyData.Material ] )
@@ -569,108 +568,3 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	end
 
 end )
-
-
-function ENT:MidiInterface()
-	if IsValid(self.MidiPanel) or self.MidiCurrent then return end
-	if not self:CanUseAutoPlay() then return end
-
-	local frame = vgui.Create('DFrame')
-	frame:SetSize(450,400)
-	frame:Center()
-	frame:SetTitle('#duckInstrument.SongList')
-	frame:SetDraggable(true)
-	frame:ShowCloseButton(true)
-	frame:MakePopup()
-	self.MidiPanel = frame
-
-	frame.ent = self
-	function frame:Think()
-		if not IsValid(self.ent) or LocalPlayer().duckInstrument ~= self.ent then
-			self:Remove()
-		end
-	end
-
-	local topBar = frame:Add('DPanel')
-	topBar:SetPaintBackground(false)
-	topBar:Dock(TOP)
-	topBar:DockMargin(0, 0, 0, 5)
-
-	local songList
-
-	local searchBar = topBar:Add("DTextEntry")
-	searchBar:Dock(RIGHT)
-	searchBar:DockMargin(0, 0, 120, 0)
-	searchBar:SetWide(200)
-	searchBar:SetPlaceholderText("#spawnmenu.search")
-	searchBar:SetUpdateOnType(true)
-	searchBar.songs = {}
-
-	searchBar.OnValueChange = function(self, v)
-		local isEmpty = (v == "")
-		v = string.lower(v)
-
-		for i = 1, #self.songs do
-			local pnl = self.songs[i]
-			if isEmpty or string.find(pnl.search or "", v, 1, true) then
-				pnl:Show()
-			else
-				pnl:Hide()
-			end
-		end
-
-		songList:SetDirty(true)
-		songList:InvalidateLayout()
-	end
-	searchBar:RequestFocus()
-
-
-	songList = vgui.Create('DListView', frame)
-	songList:SetMultiSelect(false)
-	songList:Dock(FILL)
-	songList:AddColumn('#duckInstrument.Songs')
-	songList.OnRowSelected = function(lst, _, pnl)
-		if not IsValid( self ) then
-			frame:Close()
-			return
-		end
-
-		local inst = LocalPlayer().duckInstrument
-		if not IsValid(inst) or inst ~= self then
-			frame:Close()
-			return
-		end
-
-		local songId = pnl.songId
-		if not self:CanUseAutoPlay(songId) then
-			frame:Close()
-			return
-		end
-
-		self:CloseSheetMusic()
-
-		self.MidiName = duckInstruments.songNames[songId]
-		self.MidiCurrent = duckInstruments.songs[songId]
-		self.MidiCurrentId = songId
-		self.MidiStartTime = CurTime()
-		self.MidiCurrentNote = 1
-		self.MidiKeysDown = {}
-
-		net.Start('DuckInstrumentNetwork')
-			net.WriteEntity( self )
-			net.WriteUInt( INSTNET_MIDISTART, 3 )
-			net.WriteUInt( songId, 7 )
-		net.SendToServer()
-
-		frame:Close()
-	end
-
-	for i = 1, #duckInstruments.songNames do
-		if not self:CanUseAutoPlay(i) then continue end
-		local pnl = songList:AddLine(duckInstruments.songNames[i])
-		pnl.songId = i
-		pnl.search = string.lower(duckInstruments.songNames[i])
-		searchBar.songs[#searchBar.songs + 1] = pnl
-	end
-	songList:SortByColumn( 1 )
-end

@@ -28,6 +28,20 @@ function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
+function duckInstruments.GetSongCover(id)
+	return duckInstruments.songCovers[id]
+end
+
+function duckInstruments.GetSongNotesCount(id)
+	return duckInstruments.songs[id] and #duckInstruments.songs[id] / 2
+end
+
+function duckInstruments.GetSongDuration(id)
+	local song = duckInstruments.songs[id]
+	return song and song[#song]
+end
+
+
 local function ReloadSongs()
 	duckInstruments.songs = {}
 	duckInstruments.songNames = {}

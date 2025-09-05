@@ -1,5 +1,6 @@
 AddCSLuaFile( 'cl_init.lua' )
 AddCSLuaFile( 'cl_midi_hud.lua' )
+AddCSLuaFile( 'cl_midi_songlist_frame.lua' )
 AddCSLuaFile( 'shared.lua' )
 include( 'shared.lua' )
 
