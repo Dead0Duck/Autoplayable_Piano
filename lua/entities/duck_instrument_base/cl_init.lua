@@ -12,6 +12,7 @@ ENT.DEBUG = true
 ENT.MidiCurrentNote = 1
 ENT.NoteKeys = {}
 ENT.KeysDown = {}
+ENT.MidiKeysDown = {}
 ENT.KeysWasDown = {}
 
 ENT.ShiftMode = false
@@ -92,15 +93,12 @@ function ENT:MidiNotePlay(note)
 	self:OnRegisteredKeyPlayed(noteName, true)
 
 	if not key then return true end
-	if string.match(noteName, '#') then
-		self.ShiftMode = true
-	end
-	self.KeysDown[ key ] = true
+
+	self.MidiKeysDown[noteName] = true
 	timer.Create( 'duck_inst_note' .. noteName, 0.04, 1, function()
 		if not IsValid(self) then return end
 
-		self.KeysDown[ key ] = false
-		self.ShiftMode = false
+		self.MidiKeysDown[noteName] = nil
 	end)
 
 	self:NoteEffect(noteName)
@@ -266,38 +264,36 @@ end
 
 function ENT:DrawKey( mainX, mainY, key, keyData, bShiftMode )
 
-	if keyData.Material and (
-		( self.ShiftMode and bShiftMode and self.KeysDown[key] ) or
-		   ( not self.ShiftMode and not bShiftMode and self.KeysDown[key] ) ) then
+	local isDown = self.MidiCurrent and self.MidiKeysDown[keyData.Sound]
+		or (self.ShiftMode and bShiftMode and input.IsKeyDown(key)) 
+		or (not self.ShiftMode and not bShiftMode and input.IsKeyDown( key ))
+
+	if keyData.Material and isDown then
 		surface.SetTexture( self.KeyMaterialIDs[ keyData.Material ] )
 		surface.DrawTexturedRect( mainX + keyData.X, mainY + keyData.Y, self.DefaultMatWidth, self.DefaultMatHeight )
 	end
 
-	-- Draw keys
-	if keyData.Label and not self.MidiCurrent then
+	if not keyData.Label then return end
+	if self.MidiCurrent then return end
 
-		local offsetX = self.DefaultTextX
-		local offsetY = self.DefaultTextY
-		local color = self.DefaultTextColor
+	local offsetX = self.DefaultTextX
+	local offsetY = self.DefaultTextY
+	local color = self.DefaultTextColor
 
-		if ( self.ShiftMode and bShiftMode and input.IsKeyDown( key ) ) or
-		   ( not self.ShiftMode and not bShiftMode and input.IsKeyDown( key ) ) then
-
-			color = self.DefaultTextColorActive
-			if keyData.AColor then color = keyData.AColor end
-		else
-			if keyData.Color then color = keyData.Color end
-		end
-
-		-- Override positions, if needed
-		if keyData.TextX then offsetX = keyData.TextX end
-		if keyData.TextY then offsetY = keyData.TextY end
-
-		draw.DrawText( keyData.Label, 'DuckInstrumentKeyLabel',
-			mainX + keyData.X + offsetX,
-			mainY + keyData.Y + offsetY,
-			color, TEXT_ALIGN_CENTER )
+	if isDown then
+		color = self.DefaultTextColorActive
+		if keyData.AColor then color = keyData.AColor end
+	else
+		if keyData.Color then color = keyData.Color end
 	end
+
+	if keyData.TextX then offsetX = keyData.TextX end
+	if keyData.TextY then offsetY = keyData.TextY end
+
+	draw.DrawText( keyData.Label, 'DuckInstrumentKeyLabel',
+		mainX + keyData.X + offsetX,
+		mainY + keyData.Y + offsetY,
+		color, TEXT_ALIGN_CENTER )
 end
 
 function ENT:DrawHUD()
@@ -658,6 +654,7 @@ function ENT:MidiInterface()
 		self.MidiCurrentId = songId
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
+		self.MidiKeysDown = {}
 
 		net.Start('DuckInstrumentNetwork')
 			net.WriteEntity( self )
