@@ -12,7 +12,7 @@ ENT.MaxDist		= 128 ^ 2	-- distance to use piano
 ENT.ShowNoteEffect	= true	-- should we show note effect when key is pressed
 ENT.NoteEffectSize	= 1		-- note effect size
 
-ENT.SoundDir	= 'duckInstrument/piano/'
+ENT.SoundDir	= 'duck_instrument/piano/'
 ENT.SoundExt 	= '.wav'
 
 ENT.MidiCurrent = nil
