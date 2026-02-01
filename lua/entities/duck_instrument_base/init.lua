@@ -111,9 +111,6 @@ local function HookChair( ply, ent )
 		return false
 
 	end
-
-	return true
-
 end
 
 -- Quick fix for overriding the instrument chair seating
