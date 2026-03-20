@@ -18,6 +18,7 @@ function duckInstruments.GetSongName(id)
 end
 
 duckInstruments.SetCover = EmptyFunc
+duckInstruments.SetSource = EmptyFunc
 
 local function ReloadSongs()
 	duckInstruments.songNames = {}
@@ -49,7 +50,7 @@ concommand.Add("duck_piano_reload", function(ply)
 
 	-- Не хотим путаницу с музыкой, так что сбросим это всё нафиг
 	for _, ent in ents.Iterator() do
-		if ent.Base == "duck_instrument_base" then
+		if ent.IsDuckInstrument then
 			ent.MidiCurrent = nil
 			ent.MidiStartTime = nil
 
