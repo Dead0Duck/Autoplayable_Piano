@@ -68,7 +68,7 @@ function duckInstruments.ReadName(path)
 	return songName
 end
 
-function duckInstruments.ReadFull(path)
+function duckInstruments.ReadAllInfo(path)
 	local f = OpenFile(path)
 	if not f then return end
 
@@ -78,19 +78,13 @@ function duckInstruments.ReadFull(path)
 		songCover = ReadNullTerminatedString(f)
 	end
 
-	local data = {}
-	while not f:EndOfFile() do
-		local noteInd = f:ReadByte()
-		if not noteInd or not indexToNote[noteInd] then break end
+	local size = f:Size()
+	local count = (size - f:Tell()) / 9		-- Одна нота занимает 9 байт (1 байт на ноту, 8 байт на её время)
 
-		local noteTime = f:ReadDouble()
-		if not noteTime then break end
+	f:Seek(size - 8)	-- Перемещаемся ко времени последней ноты, чтобы узнать длительность
+	local dur = f:ReadDouble()
 
-		data[#data + 1] = indexToNote[noteInd]
-		data[#data + 1] = noteTime
-	end
-
-	return {songName, songCover, data}
+	return {songName, songCover, count, dur}
 end
 
 function duckInstruments.ReadNotes(path)

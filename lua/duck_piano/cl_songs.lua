@@ -74,12 +74,11 @@ if not IsLocalGame then
 end
 
 local function ReadFile(path)
-	local data = duckInstruments.ReadFull(path)
-	local notes = data[3]
+	local data = duckInstruments.ReadAllInfo(path)
 
-	SetNotesCount(#notes / 2)
-	SetDuration(notes[#notes])
-	SetCover(data[2])
+	curCount = data[3]
+	curDur = data[4]
+	curCover = data[2]
 
 	AddSong(data[1], path)
 end

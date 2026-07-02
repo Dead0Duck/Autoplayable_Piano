@@ -5,6 +5,7 @@ if game.SinglePlayer() then
 	include("sv_migrator.lua")
 end
 include("sh_reader_v2.lua")
+local LoadSongsV1 = include("sv_reader_v1.lua")
 
 local songsPath = "data_static/duck_instrument/songs/"
 
@@ -38,6 +39,8 @@ local function ReloadSongs()
 		local songName = duckInstruments.ReadName(fileName)
 		AddSong(songName)
 	end
+
+	LoadSongsV1()
 
 	print("[Duck Instruments] Registered " .. #duckInstruments.songNames .. " songs.")
 end
