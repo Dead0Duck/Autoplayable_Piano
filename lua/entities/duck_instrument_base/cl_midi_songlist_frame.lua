@@ -144,7 +144,7 @@ function ENT:MidiInterface()
 		songCover:SetSize(64, 64)
 		songCover:Dock(LEFT)
 		songCover:DockMargin(5, 5, 0, 5)
-		songCover:SetImage("deadduck/instruments/song_covers/" .. songCoverImg)
+		songCover:SetOnViewMaterial("deadduck/instruments/song_covers/" .. songCoverImg, "deadduck/instruments/song_covers/unknown.png")
 	end
 	songList:SortByColumn( 1 )
 end
