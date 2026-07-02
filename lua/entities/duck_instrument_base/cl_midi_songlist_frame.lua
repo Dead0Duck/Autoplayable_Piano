@@ -86,8 +86,13 @@ function ENT:MidiInterface()
 
 		self:CloseSheetMusic()
 
+		local data = duckInstruments.songs[songId]
+		if isstring(data) then
+			data = duckInstruments.ReadNotes(data)
+		end
+
 		self.MidiName = duckInstruments.songNames[songId]
-		self.MidiCurrent = duckInstruments.songs[songId]
+		self.MidiCurrent = data
 		self.MidiCurrentId = songId
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
