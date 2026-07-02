@@ -1,7 +1,8 @@
 duckInstruments = {}
 duckInstruments.songNames = {}
 
-local function EmptyFunc()
+if game.SinglePlayer() then
+	include("sv_migrator.lua")
 end
 
 local function AddSong(n)
