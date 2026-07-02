@@ -14,6 +14,7 @@ ResetData()
 
 local songsPath = "data_static/duck_instrument/songs/"
 include("sh_reader_v2.lua")
+local LoadSongsV1 = include("cl_reader_v1.lua")
 
 local function EmptyFunc()
 end
@@ -38,18 +39,6 @@ local function AddSong(n, v)
 	end
 
 	return i
-end
-
-local function SetCover(cover)
-	curCover = cover or nil
-end
-
-local function SetDuration(dur)
-	curDur = dur or 0
-end
-
-local function SetNotesCount(count)
-	curCount = count or 0
 end
 
 function duckInstruments.GetSongName(id)
@@ -111,6 +100,8 @@ local function ReloadSongs()
 		curSource = GetFileOrigin(fileName)
 		ReadFile(fileName)
 	end
+
+	LoadSongsV1()
 end
 ReloadSongs()
 

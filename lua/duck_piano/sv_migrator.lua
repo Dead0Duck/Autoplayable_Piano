@@ -1,5 +1,3 @@
-local noteToIndex = {}
-
 local function EmptyFunc()
 end
 
@@ -48,6 +46,7 @@ local function SanitizeFileName(filename)
 	return sanitized
 end
 
+local noteToIndex = {}
 do
 	local noteNames = {
 		"A", "A#", "B",
