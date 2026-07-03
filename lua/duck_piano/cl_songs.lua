@@ -61,7 +61,7 @@ end
 local addns = engine.GetAddons()
 local function GetFileOrigin(path)
 	for i = 1, #addns do
-		if file.Exists(path, addns[i].title) then
+		if file.Exists(songsPath .. path, addns[i].title) then
 			return addns[i].title
 		end
 	end
