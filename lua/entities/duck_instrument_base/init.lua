@@ -97,7 +97,7 @@ local function HookChair( ply, ent )
 
 	local inst = ent:GetOwner()
 
-	if IsValid( inst ) and inst.DuckInstrument then
+	if IsValid( inst ) and inst.IsDuckInstrument then
 
 		if not IsValid( inst:GetInstOwner() ) then
 			inst:AddOwner( ply )
@@ -239,7 +239,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	if enum == INSTNET_PLAY then
 
 		-- Filter out non-instruments
-		if not ent.DuckInstrument then return end
+		if not ent.IsDuckInstrument then return end
 
 		-- This instrument doesn't have an owner...
 		if not IsValid( ent:GetInstOwner() ) then return end
@@ -265,7 +265,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	elseif enum == INSTNET_MIDISTART then
 
 		-- Filter out non-instruments
-		if not ent.DuckInstrument then return end
+		if not ent.IsDuckInstrument then return end
 
 		-- This instrument doesn't have an owner...
 		if not IsValid( ent:GetInstOwner() ) then return end
@@ -290,7 +290,7 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 	elseif enum == INSTNET_MIDISPAWN then
 
 		-- Filter out non-instruments
-		if not ent.DuckInstrument then return end
+		if not ent.IsDuckInstrument then return end
 
 		-- This instrument doesn't have an owner...
 		if not IsValid( ent:GetInstOwner() ) then return end
@@ -312,7 +312,7 @@ end )
 concommand.Add( 'duck_instrument_leave', function( ply, cmd, args )
 
 	local ent = ply.DuckInstrument
-	if not IsValid( ent ) or not ent.DuckInstrument then return end
+	if not IsValid( ent ) or not ent.IsDuckInstrument then return end
 
 	-- This player is not using this instrument
 	if ply ~= ent:GetInstOwner() then return end
@@ -324,7 +324,7 @@ end )
 concommand.Add( 'duck_instrument_auto_stop', function( ply, cmd, args )
 
 	local ent = ply.DuckInstrument
-	if not IsValid( ent ) or not ent.DuckInstrument then return end
+	if not IsValid( ent ) or not ent.IsDuckInstrument then return end
 
 	-- This player is not using this instrument
 	if ply ~= ent:GetInstOwner() then return end

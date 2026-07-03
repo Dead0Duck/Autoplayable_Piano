@@ -1,6 +1,5 @@
 local surface_GetTextureID = surface.GetTextureID
 local Color = Color
-local ScrH = ScrH
 local draw_TexturedQuad = draw.TexturedQuad
 local Format = Format
 local language_GetPhrase = language.GetPhrase
@@ -12,6 +11,7 @@ local surface_SetMaterial = surface.SetMaterial
 local surface_DrawRect = surface.DrawRect
 local surface_DrawTexturedRect = surface.DrawTexturedRect
 local string_FormattedTime = string.FormattedTime
+local duckInstruments = duckInstruments
 
 local hudHeight = 0
 local hudGradient = surface_GetTextureID( "gui/gradient" )
@@ -56,7 +56,7 @@ function ENT:DrawHUDMidi()
 	w, h = draw_TextShadow( TextTable, 2 )
 	y = y + h + 8
 
-	local maxTime = self.MidiCurrent[#self.MidiCurrent]
+	local maxTime = duckInstruments.songDuration[self.MidiCurrentId]
 	local curTime = CurTime() - self.MidiStartTime
 
 	local maxWidth = 450

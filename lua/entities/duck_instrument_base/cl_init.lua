@@ -551,7 +551,12 @@ net.Receive( 'DuckInstrumentNetwork', function( length, client )
 		local index = net.ReadUInt(7)
 		if not duckInstruments.songs[index] then return end
 
-		ent.MidiCurrent = duckInstruments.songs[index]
+		local data = duckInstruments.songs[index]
+		if isstring(data) then
+			data = duckInstruments.ReadNotes(data)
+		end
+
+		ent.MidiCurrent = data
 		ent.MidiCurrentId = index
 		ent.MidiStartTime = net.ReadDouble()
 		ent.MidiCurrentNote = 1

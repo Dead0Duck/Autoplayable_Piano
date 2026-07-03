@@ -1,8 +1,13 @@
 duckInstruments = {}
 duckInstruments.songNames = {}
 
-local function EmptyFunc()
+if game.SinglePlayer() then
+	include("sv_migrator.lua")
 end
+include("sh_reader_v2.lua")
+local LoadSongsV1 = include("sv_reader_v1.lua")
+
+local songsPath = "data_static/duck_instrument/songs/"
 
 local function AddSong(n)
 	if not isstring(n) then return end
@@ -17,29 +22,27 @@ function duckInstruments.GetSongName(id)
 	return duckInstruments.songNames[id]
 end
 
-duckInstruments.SetCover = EmptyFunc
-
 local function ReloadSongs()
+	local songFiles, songFolders = file.Find(songsPath .. "*", "GAME")
+
 	duckInstruments.songNames = {}
 
-	-- Разрешить добавление песен только из songs/*
-	local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
-	duckInstruments.AddSong = AddSong
-
 	for _,folder in pairs(songFolders) do
-		local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
+		local songFiles = file.Find(songsPath .. folder .."/*", "GAME")
 		for _,fileName in pairs(songFiles) do
-			AddCSLuaFile('duck_piano/songs/' .. folder .. '/' .. fileName)
-			include('duck_piano/songs/' .. folder .. '/' .. fileName)
+			local songName = duckInstruments.ReadName(folder .."/" .. fileName)
+			AddSong(songName)
 		end
 	end
 
 	for _,fileName in pairs(songFiles) do
-		AddCSLuaFile('duck_piano/songs/' .. fileName)
-		include('duck_piano/songs/' .. fileName)
+		local songName = duckInstruments.ReadName(fileName)
+		AddSong(songName)
 	end
 
-	duckInstruments.AddSong = EmptyFunc
+	LoadSongsV1()
+
+	print("[Duck Instruments] Registered " .. #duckInstruments.songNames .. " songs.")
 end
 ReloadSongs()
 
@@ -49,7 +52,7 @@ concommand.Add("duck_piano_reload", function(ply)
 
 	-- Не хотим путаницу с музыкой, так что сбросим это всё нафиг
 	for _, ent in ents.Iterator() do
-		if ent.Base == "duck_instrument_base" then
+		if ent.IsDuckInstrument then
 			ent.MidiCurrent = nil
 			ent.MidiStartTime = nil
 
@@ -61,7 +64,6 @@ concommand.Add("duck_piano_reload", function(ply)
 	end
 
 	ReloadSongs()
-	print("[Duck Instruments] Registered " .. #duckInstruments.songNames .. " songs.")
 
 	net.Start("duck_piano_reload")
 	net.Broadcast()

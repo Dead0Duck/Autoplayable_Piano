@@ -1,3 +1,5 @@
+local IsLocalGame = game.SinglePlayer()
+
 function ENT:MidiInterface()
 	if IsValid(self.MidiPanel) or self.MidiCurrent then return end
 	if not self:CanUseAutoPlay() then return end
@@ -63,6 +65,7 @@ function ENT:MidiInterface()
 	songList:AddColumn('#duckInstrument.filTitle')
 	songList:AddColumn('#duckInstrument.filDuration')
 	songList:AddColumn('#duckInstrument.filNotes')
+	if IsLocalGame then songList:AddColumn('#duckInstrument.filSource') end
 	songList.OnRowSelected = function(lst, _, pnl)
 		if not IsValid( self ) then
 			frame:Close()
@@ -83,8 +86,13 @@ function ENT:MidiInterface()
 
 		self:CloseSheetMusic()
 
+		local data = duckInstruments.songs[songId]
+		if isstring(data) then
+			data = duckInstruments.ReadNotes(data)
+		end
+
 		self.MidiName = duckInstruments.songNames[songId]
-		self.MidiCurrent = duckInstruments.songs[songId]
+		self.MidiCurrent = data
 		self.MidiCurrentId = songId
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
@@ -101,32 +109,42 @@ function ENT:MidiInterface()
 
 	local trDurText = language.GetPhrase("duckInstrument.Duration")
 	local trNotesText = language.GetPhrase("duckInstrument.NotesCount")
+	local trSrcText = language.GetPhrase("duckInstrument.Source")
+	local trSrcLocal = language.GetPhrase("duckInstrument.LocalSong")
 
 	for i = 1, #duckInstruments.songNames do
 		if not self:CanUseAutoPlay(i) then continue end
 
+		local name = duckInstruments.songNames[i]
 		local dur = duckInstruments.GetSongDuration(i)
 		local notes = duckInstruments.GetSongNotesCount(i)
+		local source = IsLocalGame and duckInstruments.songSources[i]
 
-		local line = songList:AddLine(duckInstruments.songNames[i], dur, notes)
+		local line = songList:AddLine(name, dur, notes, (source or "!!!!!!local") .. name)
 		line.songId = i
-		line.search = string.lower(duckInstruments.songNames[i])
+		line.search = string.lower(name)
 		searchBar.songs[#searchBar.songs + 1] = line
 
+		local pnlText = name .. "\n\n" .. Format(trDurText, string.FormattedTime(dur, "%02i:%02i")) .. "\n" .. Format(trNotesText, notes)
+		if IsLocalGame then
+			pnlText = pnlText .. "\n" .. Format(trSrcText, (source or trSrcLocal))
+		end
+
 		local pnl = line.Columns[1]
-		pnl:SetText(duckInstruments.songNames[i] .. "\n\n" .. Format(trDurText, string.FormattedTime(dur, "%02i:%02i")) .. "\n" .. Format(trNotesText, notes))
+		pnl:SetText(pnlText)
 		pnl:Dock(FILL)
 		pnl:DockMargin(5, 0, 0, 0)
 
 		line.Columns[2]:SetText("")
 		line.Columns[3]:SetText("")
+		if IsLocalGame then line.Columns[4]:SetText("") end
 
 		local songCoverImg = duckInstruments.GetSongCover(i) or "unknown.png"
 		local songCover = line:Add("DImage")
 		songCover:SetSize(64, 64)
 		songCover:Dock(LEFT)
 		songCover:DockMargin(5, 5, 0, 5)
-		songCover:SetImage("deadduck/instruments/song_covers/" .. songCoverImg)
+		songCover:SetOnViewMaterial("deadduck/instruments/song_covers/" .. songCoverImg, "deadduck/instruments/song_covers/unknown.png")
 	end
 	songList:SortByColumn( 1 )
 end

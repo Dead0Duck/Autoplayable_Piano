@@ -1,8 +1,8 @@
-ENT.Base			= 'base_anim'
-ENT.Type			= 'anim'
-ENT.PrintName		= 'Instrument Base'
-ENT.Category		= '#duckInstrument.Category'
-ENT.DuckInstrument	= true
+ENT.Base				= 'base_anim'
+ENT.Type				= 'anim'
+ENT.PrintName			= 'Instrument Base'
+ENT.Category			= '#duckInstrument.Category'
+ENT.IsDuckInstrument	= true
 
 ENT.Model		= Model( 'models/fishy/furniture/piano.mdl' )
 ENT.ChairModel	= Model( 'models/fishy/furniture/piano_seat.mdl' )
@@ -162,7 +162,7 @@ hook.Add( 'PhysgunPickup', 'NoPickupDuckInsturmentChair', function( ply, ent )
 
 	local inst = ent:GetOwner()
 
-	if IsValid( inst ) and inst.DuckInstrument then
+	if IsValid( inst ) and inst.IsDuckInstrument then
 		return false
 	end
 
