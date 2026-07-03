@@ -29,7 +29,6 @@ end
 
 local addns = engine.GetAddons()
 local function GetFileOrigin(path)
-	print(path)
 	for i = 1, #addns do
 		if file.Exists(path, addns[i].title) then
 			return addns[i].title
