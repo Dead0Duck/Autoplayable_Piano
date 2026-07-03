@@ -86,8 +86,13 @@ function ENT:MidiInterface()
 
 		self:CloseSheetMusic()
 
+		local data = duckInstruments.songs[songId]
+		if isstring(data) then
+			data = duckInstruments.ReadNotes(data)
+		end
+
 		self.MidiName = duckInstruments.songNames[songId]
-		self.MidiCurrent = duckInstruments.songs[songId]
+		self.MidiCurrent = data
 		self.MidiCurrentId = songId
 		self.MidiStartTime = CurTime()
 		self.MidiCurrentNote = 1
@@ -139,7 +144,7 @@ function ENT:MidiInterface()
 		songCover:SetSize(64, 64)
 		songCover:Dock(LEFT)
 		songCover:DockMargin(5, 5, 0, 5)
-		songCover:SetImage("deadduck/instruments/song_covers/" .. songCoverImg)
+		songCover:SetOnViewMaterial("deadduck/instruments/song_covers/" .. songCoverImg, "deadduck/instruments/song_covers/unknown.png")
 	end
 	songList:SortByColumn( 1 )
 end

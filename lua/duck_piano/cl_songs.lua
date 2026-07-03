@@ -1,38 +1,44 @@
 local IsLocalGame = game.SinglePlayer()
 
 duckInstruments = {}
-duckInstruments.songs = {}
-duckInstruments.songNames = {}
-duckInstruments.songCovers = {}
-duckInstruments.songSources = {}
+
+local function ResetData()
+	duckInstruments.songs = {}
+	duckInstruments.songNames = {}
+	duckInstruments.songCovers = {}
+	duckInstruments.songSources = IsLocalGame and {} or nil
+	duckInstruments.songDuration = {}
+	duckInstruments.songNotesCount = {}
+end
+ResetData()
+
+local songsPath = "data_static/duck_instrument/songs/"
+include("sh_reader_v2.lua")
+local LoadSongsV1 = include("cl_reader_v1.lua")
 
 local function EmptyFunc()
 end
 
 local curCover
 local curSource
+local curDur = 0
+local curCount = 0
 
 local function AddSong(n, v)
 	if not isstring(n) then return end
-	if not istable(v) then return end
+	if not isstring(v) and not istable(v) then return end
 
 	local i = #duckInstruments.songs + 1
 	duckInstruments.songs[i] = v
 	duckInstruments.songNames[i] = n
 	duckInstruments.songCovers[i] = curCover
+	duckInstruments.songDuration[i] = curDur
+	duckInstruments.songNotesCount[i] = curCount
 	if IsLocalGame then
 		duckInstruments.songSources[i] = curSource
 	end
 
 	return i
-end
-
-local function SetCover(cover)
-	curCover = cover or nil
-end
-
-local function SetSource(source)
-	curSource = source or nil
 end
 
 function duckInstruments.GetSongName(id)
@@ -43,13 +49,12 @@ function duckInstruments.GetSongCover(id)
 	return duckInstruments.songCovers[id]
 end
 
-function duckInstruments.GetSongNotesCount(id)
-	return duckInstruments.songs[id] and #duckInstruments.songs[id] / 2
+function duckInstruments.GetSongDuration(id)
+	return duckInstruments.songDuration[id]
 end
 
-function duckInstruments.GetSongDuration(id)
-	local song = duckInstruments.songs[id]
-	return song and song[#song]
+function duckInstruments.GetSongNotesCount(id)
+	return duckInstruments.songNotesCount[id]
 end
 
 
@@ -65,43 +70,37 @@ end
 -- На выделенных серверах все файлы будут "Локальными аддонами", так что выпиливаем это вобще
 if not IsLocalGame then
 	GetFileOrigin = EmptyFunc
-	SetSource = EmptyFunc
 	duckInstruments.songSources = nil
 end
 
-local function ReloadSongs()
-	duckInstruments.songs = {}
-	duckInstruments.songNames = {}
-	duckInstruments.songCovers = {}
-	if IsLocalGame then
-		duckInstruments.songSources = {}
-	end
+local function ReadFile(path)
+	local data = duckInstruments.ReadAllInfo(path)
 
-	-- Разрешить добавление песен только из songs/*
-	local songFiles, songFolders = file.Find('duck_piano/songs/*', 'LUA')
-	duckInstruments.AddSong = AddSong
-	duckInstruments.SetCover = SetCover
-	duckInstruments.SetSource = SetSource
+	curCount = data[3]
+	curDur = data[4]
+	curCover = data[2]
+
+	AddSong(data[1], path)
+end
+local function ReloadSongs()
+	local songFiles, songFolders = file.Find(songsPath .. "*", "GAME")
+
+	ResetData()
 
 	for _,folder in pairs(songFolders) do
-		local songFiles = file.Find( 'duck_piano/songs/' .. folder ..'/*', 'LUA' )
+		local songFiles = file.Find(songsPath .. folder .."/*", "GAME")
 		for _,fileName in pairs(songFiles) do
-			curCover = nil
-			curSource = GetFileOrigin('lua/duck_piano/songs/' .. folder .. '/' .. fileName)
-			include('duck_piano/songs/' .. folder .. '/' .. fileName)
+			curSource = GetFileOrigin(folder .."/" .. fileName)
+			ReadFile(folder .."/" .. fileName)
 		end
 	end
 
 	for _,fileName in pairs(songFiles) do
-		curCover = nil
-		curSource = GetFileOrigin('lua/duck_piano/songs/' .. fileName)
-		include('duck_piano/songs/' .. fileName)
+		curSource = GetFileOrigin(fileName)
+		ReadFile(fileName)
 	end
 
-	curCover = nil
-	duckInstruments.AddSong = EmptyFunc
-	duckInstruments.SetCover = EmptyFunc
-	duckInstruments.SetSource = EmptyFunc
+	LoadSongsV1()
 end
 ReloadSongs()
 
